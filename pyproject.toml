@@ -13,11 +13,24 @@ pyls = "pyls.__main__:main"
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 
-[tool.ty]
-include = ["src"]
+[tool.ty.src]
+include = ["src", "tests"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py313"
+
+[tool.ruff.lint]
+# まずは定番だけ（必要になったら増やす）
+select = ["E", "F", "I", "UP"]
+# E: pycodestyle / F: pyflakes / I: import sort / UP: pyupgrade
 
 [tool.uv]
 package = true
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
 
 [build-system]
 requires = ["setuptools>=68"]
@@ -27,4 +40,5 @@ build-backend = "setuptools.build_meta"
 dev = [
     "pytest>=9.0.2",
     "ty>=0.0.7",
+    "ruff>=0.12.0",
 ]
