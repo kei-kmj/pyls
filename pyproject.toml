@@ -1,0 +1,30 @@
+[project]
+name = "pyls"
+version = "0.1.0"
+description = "Add your description here"
+requires-python = ">=3.12"
+dependencies = [
+    "setuptools>=68",
+]
+
+[project.scripts]
+pyls = "pyls.__main__:main"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ty]
+include = ["src"]
+
+[tool.uv]
+package = true
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[dependency-groups]
+dev = [
+    "pytest>=9.0.2",
+    "ty>=0.0.7",
+]
