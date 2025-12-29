@@ -63,7 +63,7 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument(
         "-U",
         "--sort-untimed",
-        dest="no_sort",
+        dest="unsorted",
         action="store_true",
         help="do not sort; list entries in directory order")
     p.add_argument("-v", "--sort-version", action="store_true", help="natural sort of (version) numbers within text")

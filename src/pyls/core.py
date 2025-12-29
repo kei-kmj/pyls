@@ -20,7 +20,7 @@ class FileEntry:
 @dataclass(frozen=True)
 class ScanPathsResult:
     entries: list[FileEntry]
-    pending_dirs: list[Path]
+    dir_queue: list[Path]
     exit_status: ExitStatus
 
 
@@ -47,6 +47,17 @@ def gobble_file(
     return ExitStatus.OK
 
 
+def should_include(name: str, opts) -> bool:
+    if opts.all:
+        return True
+
+    if opts.almost_all:
+        return name not in {".", ".."}
+
+    return not name.startswith(".")
+
+
+
 def scan_dir_children(
         dir_path: Path,
         opts,
@@ -61,9 +72,15 @@ def scan_dir_children(
         print(f"pyls: cannot access '{dir_path}': Permission denied")
         return ExitStatus.ERROR
 
+    if opts.all:
+        entries.append(FileEntry(path=dir_path, name=".", is_dir=True))
+        entries.append(FileEntry(path=dir_path.parent, name="..", is_dir=True))
+
     exit_status = ExitStatus.OK
     for child in children:
-        exit_status |= gobble_file(child, opts, entries)
+        if not should_include(child.name, opts):
+            continue
+        exit_status |= int(gobble_file(child, opts, entries))
     return ExitStatus(exit_status)
 
 
@@ -98,6 +115,11 @@ def collect_entries_bfs(paths: list[Path],opts)-> ScanPathsResult:
 
     move_dirs_to_pending(entries, dir_queue, opts)
 
+    if not opts.recursive:
+        for d in list(dir_queue):
+            exit_status |= scan_dir_children(d, opts, entries)
+        return ScanPathsResult(entries=entries, dir_queue=dir_queue, exit_status=ExitStatus(exit_status))
+
     i = 0
     while i < len(dir_queue):
         d = dir_queue[i]
@@ -126,3 +148,23 @@ def move_dirs_to_pending(
 
     entries.clear()
     entries.extend(files)
+
+def replace_nonprintable(s: str) -> str:
+    return "".join(ch if ch.isprintable() else "?" for ch in s)
+
+def iter_display_entries(entries: list[FileEntry], opts) -> list[FileEntry]:
+    if opts.unsorted:
+        return list(entries)
+    return sorted(entries, key=lambda e: e.name, reverse=opts.reverse)
+
+def format_entry_name(entry: FileEntry, opts) -> str:
+    name = entry.name
+
+    if opts.hide_control_chars:
+        name = replace_nonprintable(name)
+
+    return name
+
+def print_names(entries: list[FileEntry], opts) -> None:
+    for entry in iter_display_entries(entries, opts):
+        print(format_entry_name(entry, opts))
