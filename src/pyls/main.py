@@ -2,8 +2,10 @@ from __future__ import annotations
 
 import argparse
 import sys
+from pathlib import Path
 
 from pyls.cli import build_parser
+from pyls.core import FileEntry, gobble_file
 
 
 def print_args(args: argparse.Namespace) -> None:
@@ -61,6 +63,13 @@ def main(argv: list[str] | None = None) -> None:
         argv = sys.argv[1:]
 
     args = build_parser().parse_args(argv)
+
+    cwd_entries: list[FileEntry] = []
+
+    status = 0
+    paths = args.paths if args.paths else ["."]
+    for p in paths:
+        status = max(status, gobble_file(Path(p), args, cwd_entries))
 
     print_args(args)
 

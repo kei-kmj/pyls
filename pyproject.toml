@@ -32,6 +32,9 @@ package = true
 quote-style = "double"
 indent-style = "space"
 
+
+[tool.ruff.lint.pylint]
+
 [build-system]
 requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
