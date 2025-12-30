@@ -1,27 +1,8 @@
 import stat
-from dataclasses import dataclass
-from enum import IntEnum
 from pathlib import Path
 
-
-class ExitStatus(IntEnum):
-    OK = 0
-    ERROR = 1
-
-
-
-@dataclass(frozen=True)
-class FileEntry:
-    path: Path
-    name: str
-    is_dir: bool
-
-
-@dataclass(frozen=True)
-class ScanPathsResult:
-    entries: list[FileEntry]
-    dir_queue: list[Path]
-    exit_status: ExitStatus
+from pyls.display import iter_display_entries, format_entry_name
+from pyls.types import FileEntry, ExitStatus, ScanPathsResult
 
 
 def gobble_file(
@@ -149,21 +130,7 @@ def move_dirs_to_pending(
     entries.clear()
     entries.extend(files)
 
-def replace_nonprintable(s: str) -> str:
-    return "".join(ch if ch.isprintable() else "?" for ch in s)
 
-def iter_display_entries(entries: list[FileEntry], opts) -> list[FileEntry]:
-    if opts.unsorted:
-        return list(entries)
-    return sorted(entries, key=lambda e: e.name, reverse=opts.reverse)
-
-def format_entry_name(entry: FileEntry, opts) -> str:
-    name = entry.name
-
-    if opts.hide_control_chars:
-        name = replace_nonprintable(name)
-
-    return name
 
 def print_names(entries: list[FileEntry], opts) -> None:
     for entry in iter_display_entries(entries, opts):

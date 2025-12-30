@@ -3,11 +3,8 @@ from pathlib import Path
 import pytest
 
 from pyls.core import (
-    FileEntry,
     collect_entries_bfs,
-    format_entry_name,
     move_dirs_to_pending,
-    replace_nonprintable,
     scan_dir_children,
     should_include,
 )
@@ -125,16 +122,3 @@ def test_collect_entries_bfs_returns_scan_paths_result_for_existing_file(sample_
     assert result.exit_status == 0
     assert result.dir_queue == []
     assert {e.name for e in result.entries} == {"file_0000.txt"}
-
-
-
-def test_replace_nonprintable_replaces_control_chars_with_question_mark():
-    assert replace_nonprintable("a\nb") == "a?b"
-    assert replace_nonprintable("a\tb") == "a?b"
-
-def test_format_entry_name_applies_q():
-    class Opts:
-        hide_control_chars = True
-
-    e = FileEntry(Path("x"), "a\nb", False)
-    assert format_entry_name(e, Opts()) == "a?b"

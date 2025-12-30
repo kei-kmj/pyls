@@ -77,15 +77,5 @@ def build_parser() -> argparse.ArgumentParser:
         help="assume screen width instead of current value")
     p.add_argument("-Z", "--context", action="store_true", help="print any SELinux security context of each file")
     p.add_argument("-1", "--one-column", action="store_true", help="list one file per line")
-
-
-
-
-
-
-
-
-
-
     p.add_argument("paths", nargs="*")
     return p

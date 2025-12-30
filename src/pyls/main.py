@@ -10,8 +10,6 @@ from pyls.core import FileEntry, collect_entries_bfs, gobble_file, print_names
 
 def print_args(args: argparse.Namespace) -> None:
     fields = [
-        "escape",
-        "directory",
         "file_type",
         "classify",
         "no_owner",
@@ -21,11 +19,7 @@ def print_args(args: argparse.Namespace) -> None:
         "ignore",
         "long",
         "numeric_uid_gid",
-        "literal",
         "no_group",
-        "p",
-        "indicator_style",
-        "quote_name",
         "recursive",
         "size",
         "sort",
