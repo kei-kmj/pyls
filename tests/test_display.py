@@ -2,12 +2,12 @@ from pathlib import Path
 
 from pyls.display import (
     c_escape,
-    replace_nonprintable,
-    quote_double,
+    filter_ignored,
     format_entry_name,
+    quote_double,
+    replace_nonprintable,
 )
 from pyls.types import FileEntry
-
 
 # c_escape tests
 
@@ -124,3 +124,22 @@ def test_p_appends_slash_only_for_directories():
 
     assert format_entry_name(d, Opts()) == "dir/"
     assert format_entry_name(f, Opts()) == "file"
+
+
+def test_ignore_filters_matching_names():
+    class Opts:
+        ignore = ["*.py"]
+        unsorted = False
+        reverse = False
+        literal_name = True
+        escape = False
+        hide_control_chars = False
+        quote_name = False
+        p = False
+
+    entries = [
+        FileEntry(Path("a.py"), "a.py", False),
+        FileEntry(Path("b.txt"), "b.txt", False),
+    ]
+    filtered = filter_ignored(entries, Opts())
+    assert [e.name for e in filtered] == ["b.txt"]

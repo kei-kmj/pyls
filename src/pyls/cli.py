@@ -28,7 +28,8 @@ def build_parser() -> argparse.ArgumentParser:
         "-I",
         "--ignore",
         metavar="PATTERN",
-        action="store",
+        action="append",
+        default=[],
         help="do not list implied entries matching PATTERN")
     p.add_argument("-l", dest="long", action="store_true", help="use a long listing format")
     p.add_argument("-n", "--numeric-uid-gid", action="store_true", help="like -l, but list numeric user and group IDs")

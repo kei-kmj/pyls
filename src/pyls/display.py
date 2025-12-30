@@ -1,3 +1,9 @@
+import fnmatch
+from collections.abc import Iterable
+
+from pyls.types import FileEntry
+
+
 def c_escape(s: str) -> str:
     output: list[str] = []
 
@@ -45,6 +51,17 @@ def iter_display_entries(entries: list[FileEntry], opts) -> list[FileEntry]:
 def quote_double(s: str) -> str:
     s = s.replace("\\", "\\\\").replace('"', '\\"')
     return f'"{s}"'
+
+
+def should_ignore(name: str, patterns: list[str]) -> bool:
+    return any(fnmatch.fnmatch(name, pat) for pat in patterns)
+
+
+def filter_ignored(entries: Iterable[FileEntry], opts) -> list[FileEntry]:
+    patterns: list[str] = getattr(opts, "ignore", [])
+    if not patterns:
+        return list(entries)
+    return [e for e in entries if not should_ignore(e.name, patterns)]
 
 
 def format_entry_name(entry: FileEntry, opts) -> str:

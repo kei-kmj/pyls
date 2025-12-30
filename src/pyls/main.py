@@ -16,7 +16,6 @@ def print_args(args: argparse.Namespace) -> None:
         "human_readable",
         "hide",
         "inode",
-        "ignore",
         "long",
         "numeric_uid_gid",
         "no_group",

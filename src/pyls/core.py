@@ -1,8 +1,8 @@
 import stat
 from pathlib import Path
 
-from pyls.display import iter_display_entries, format_entry_name
-from pyls.types import FileEntry, ExitStatus, ScanPathsResult
+from pyls.display import filter_ignored, format_entry_name, iter_display_entries
+from pyls.types import ExitStatus, FileEntry, ScanPathsResult
 
 
 def gobble_file(
@@ -133,5 +133,6 @@ def move_dirs_to_pending(
 
 
 def print_names(entries: list[FileEntry], opts) -> None:
-    for entry in iter_display_entries(entries, opts):
+    filtered_entries = filter_ignored(entries, opts)
+    for entry in iter_display_entries(filtered_entries, opts):
         print(format_entry_name(entry, opts))
