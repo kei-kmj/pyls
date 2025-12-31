@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pytest
 
-from pyls.types import FileStatus, FileEntry
+from pyls.types import FileEntry, FileStatus
 
 
 @pytest.fixture(scope="session")

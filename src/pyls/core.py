@@ -1,17 +1,23 @@
 import stat
 from pathlib import Path
 
-from pyls.display import filter_ignored, format_entry_name, iter_display_entries, format_long_line, \
-    calculate_total_blocks, max_width, format_line_with_widths
-from pyls.types import ExitStatus, FileEntry, ScanPathsResult, FileStatus
+from pyls.display import (
+    calculate_total_blocks,
+    filter_ignored,
+    format_entry_name,
+    format_line_with_widths,
+    format_long_line,
+    iter_display_entries,
+    max_width,
+)
+from pyls.types import ExitStatus, FileEntry, FileStatus, ScanPathsResult
 
 
 def gobble_file(
-        path: Path,
-        opts,
-        cwd_entries: list[FileEntry],
+    path: Path,
+    opts,
+    cwd_entries: list[FileEntry],
 ) -> ExitStatus:
-
     try:
         st = path.lstat()
 
@@ -41,11 +47,10 @@ def should_include(name: str, opts) -> bool:
     return not name.startswith(".")
 
 
-
 def scan_dir_children(
-        dir_path: Path,
-        opts,
-        entries: list[FileEntry],
+    dir_path: Path,
+    opts,
+    entries: list[FileEntry],
 ) -> ExitStatus:
     try:
         children = list(dir_path.iterdir())
@@ -70,16 +75,15 @@ def scan_dir_children(
     return ExitStatus(exit_status)
 
 
-
 def extract_dirs_from_files(
-        cwd_entries: list[FileEntry],
-        pending_dirs: list[Path],
-        opts,
+    cwd_entries: list[FileEntry],
+    pending_dirs: list[Path],
+    opts,
 ) -> None:
     if opts.directory:
         return
 
-    files:list[FileEntry] = []
+    files: list[FileEntry] = []
 
     for entry in cwd_entries:
         if entry.is_dir:
@@ -91,7 +95,7 @@ def extract_dirs_from_files(
     cwd_entries.extend(files)
 
 
-def collect_entries_bfs(paths: list[Path],opts)-> ScanPathsResult:
+def collect_entries_bfs(paths: list[Path], opts) -> ScanPathsResult:
     entries: list[FileEntry] = []
     dir_queue: list[Path] = []
     exit_status = ExitStatus.OK
@@ -116,9 +120,9 @@ def collect_entries_bfs(paths: list[Path],opts)-> ScanPathsResult:
 
 
 def move_dirs_to_pending(
-        entries: list[FileEntry],
-        pending_queue: list[Path],
-        opts,
+    entries: list[FileEntry],
+    pending_queue: list[Path],
+    opts,
 ) -> None:
     if opts.directory:
         return
@@ -136,7 +140,6 @@ def move_dirs_to_pending(
     entries.extend(files)
 
 
-
 def print_entries(entries: list[FileEntry], opts) -> None:
     filtered_entries = filter_ignored(entries, opts)
     display_entries = list(iter_display_entries(filtered_entries, opts))
@@ -149,16 +152,15 @@ def print_entries(entries: list[FileEntry], opts) -> None:
 
         # 幅計算
         widths = {
-            'nlink': max_width(raw_lines, lambda l: l.nlink),
-            'owner': max_width(raw_lines, lambda l: l.owner),
-            'group': max_width(raw_lines, lambda l: l.group),
-            'size': max_width(raw_lines, lambda l: l.size),
+            "nlink": max_width(raw_lines, lambda x: x.nlink),
+            "owner": max_width(raw_lines, lambda x: x.owner),
+            "group": max_width(raw_lines, lambda x: x.group),
+            "size": max_width(raw_lines, lambda x: x.size),
         }
 
         # 2パス目：整形して出力
         for line in raw_lines:
-            print(format_line_with_widths(line, widths))
+            print(format_line_with_widths(line, widths, opts))
     else:
         for entry in display_entries:
             print(format_entry_name(entry, opts))
-

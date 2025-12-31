@@ -12,12 +12,9 @@ def print_args(args: argparse.Namespace) -> None:
     fields = [
         "file_type",
         "classify",
-        "no_owner",
         "human_readable",
         "hide",
         "inode",
-        "numeric_uid_gid",
-        "no_group",
         "recursive",
         "size",
         "sort",
@@ -28,7 +25,7 @@ def print_args(args: argparse.Namespace) -> None:
         "sort_version",
         "sort_extension",
         "width",
-        "context"
+        "context",
     ]
     for f in fields:
         if not hasattr(args, f):
@@ -54,7 +51,14 @@ def main(argv: list[str] | None = None) -> None:
     status = 0
     paths = [Path(p) for p in (args.paths if args.paths else ["."])]
     for p in paths:
-        status = max(status, gobble_file(Path(p), args, cwd_entries, ))
+        status = max(
+            status,
+            gobble_file(
+                Path(p),
+                args,
+                cwd_entries,
+            ),
+        )
 
     print_args(args)
     # for p in args.paths:

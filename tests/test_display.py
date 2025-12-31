@@ -5,10 +5,16 @@ from pathlib import Path
 
 from pyls.display import (
     c_escape,
+    filetype_char,
     filter_ignored,
     format_entry_name,
+    format_long_line,
+    format_mtime,
+    group_name,
+    permission_string,
     quote_double,
-    replace_nonprintable, filetype_char, permission_string, format_mtime, format_long_line, group_name, user_name,
+    replace_nonprintable,
+    user_name,
 )
 from tests.conftest import make_file_entry, make_file_status
 
@@ -203,7 +209,6 @@ def test_b_wins_over_q():
         hide_control_chars = True
         quote_name = False
         indicator_style = False
-
 
     e = make_file_entry(Path("x"), "a\nb", False)
     assert format_entry_name(e, Opts()) == "a\\nb"

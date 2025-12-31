@@ -4,9 +4,11 @@ import pytest
 
 from pyls.core import (
     collect_entries_bfs,
+    extract_dirs_from_files,
+    gobble_file,
     move_dirs_to_pending,
     scan_dir_children,
-    should_include, extract_dirs_from_files, gobble_file,
+    should_include,
 )
 from pyls.types import ExitStatus
 from tests.conftest import make_file_entry
@@ -60,21 +62,18 @@ def test_gobble_file_permission_denied(capsys, tmp_path):
         # default: dotfile は除外
         (False, False, "a.txt", True),
         (False, False, ".hidden", False),
-        (False, False, ".", False),   # iterdir は返さないが仕様として固定しておく
+        (False, False, ".", False),  # iterdir は返さないが仕様として固定しておく
         (False, False, "..", False),
-
         # -A: dotfile は含める（ただし . と .. は除外）
         (False, True, "a.txt", True),
         (False, True, ".hidden", True),
         (False, True, ".", False),
         (False, True, "..", False),
-
         # -a: すべて含める（-A より優先）
         (True, False, "a.txt", True),
         (True, False, ".hidden", True),
         (True, False, ".", True),
         (True, False, "..", True),
-
         # -a -A: すべて含める（-a が優先）
         (True, True, ".", True),
         (True, True, "..", True),
@@ -89,7 +88,6 @@ def test_should_include(all_flag, almost_all_flag, name, expected):
 
 
 def test_scan_dir_children_succeeds_for_existing_dir(sample_000000_dir):
-
     entries = []
     status = scan_dir_children(sample_000000_dir, Opts(), entries=entries)
 
@@ -98,7 +96,6 @@ def test_scan_dir_children_succeeds_for_existing_dir(sample_000000_dir):
 
 
 def test_scan_dir_children_fails_for_nonexistent_dir():
-
     non_existent_dir = Path("/path/to/nonexistent/dir")
     entries = []
     status = scan_dir_children(non_existent_dir, Opts(), entries=entries)

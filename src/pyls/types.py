@@ -31,6 +31,7 @@ class FileStatus:
             blocks=st.st_blocks,
         )
 
+
 @dataclass(frozen=True)
 class LongFormatLine:
     mode: str

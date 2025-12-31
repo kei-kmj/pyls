@@ -2,10 +2,11 @@ import fnmatch
 import grp
 import pwd
 import stat
-import xattr
 from collections.abc import Iterable
 from datetime import datetime
 from pathlib import Path
+
+import xattr
 
 from pyls.types import FileEntry, LongFormatLine
 
@@ -21,11 +22,20 @@ def filetype_char(st_mode: int) -> str:
         return "l"
     return "-"
 
+
 def permission_string(st_mode: int) -> str:
     permission = []
-    for who in (stat.S_IRUSR, stat.S_IWUSR, stat.S_IXUSR,
-                stat.S_IRGRP, stat.S_IWGRP, stat.S_IXGRP,
-                stat.S_IROTH, stat.S_IWOTH, stat.S_IXOTH):
+    for who in (
+        stat.S_IRUSR,
+        stat.S_IWUSR,
+        stat.S_IXUSR,
+        stat.S_IRGRP,
+        stat.S_IWGRP,
+        stat.S_IXGRP,
+        stat.S_IROTH,
+        stat.S_IWOTH,
+        stat.S_IXOTH,
+    ):
         if st_mode & who:
             if who in (stat.S_IWUSR, stat.S_IWGRP, stat.S_IWOTH):
                 permission.append("w")
@@ -49,21 +59,28 @@ def pad_value(value, width: int, right: bool = True) -> str:
         return str(value).ljust(width)
 
 
-def format_line_with_widths(line: LongFormatLine, widths: dict[str, int]) -> str:
-    return (
-        f"{line.mode} "
-        f"{pad_value(line.nlink, widths['nlink'])} "
-        f"{pad_value(line.owner, widths['owner'], right=False)}  "
-        f"{pad_value(line.group, widths['group'], right=False)}  "
-        f"{pad_value(line.size, widths['size'])} "
-        f"{line.mtime} {line.name}"
-    )
+def format_line_with_widths(line: LongFormatLine, widths: dict[str, int], opts) -> str:
+    parts = [line.mode, pad_value(line.nlink, widths["nlink"])]
+
+    if not opts.no_owner:
+        parts.append(pad_value(line.owner, widths["owner"], right=False))
+
+    if not opts.no_group:
+        parts.append(pad_value(line.group, widths["group"], right=False))
+
+    extra_space = "  " if (opts.no_owner and opts.no_group) else " "
+    parts.append(extra_space + pad_value(line.size, widths["size"]))
+    parts.append(line.mtime)
+    parts.append(line.name)
+
+    return " ".join(parts)
+
 
 def extended_attribute_char(path: Path) -> str:
     try:
         attrs = xattr.listxattr(str(path))
         return "@" if attrs else " "
-    except (OSError, IOError):
+    except OSError:
         return " "
 
 
@@ -74,6 +91,7 @@ def user_name(uid: int, numeric: bool) -> str:
         return pwd.getpwuid(uid).pw_name
     except KeyError:
         return str(uid)
+
 
 def group_name(gid: int, numeric: bool) -> str:
     if numeric:
@@ -105,7 +123,6 @@ def format_long_line(entry: FileEntry, opts) -> LongFormatLine:
 
 def mode_string(st_mode: int) -> str:
     return filetype_char(st_mode) + permission_string(st_mode)
-
 
 
 def c_escape(s: str) -> str:
@@ -141,7 +158,6 @@ def c_escape(s: str) -> str:
     return "".join(output)
 
 
-
 def replace_nonprintable(s: str) -> str:
     return "".join(ch if ch.isprintable() else "?" for ch in s)
 
@@ -169,7 +185,6 @@ def filter_ignored(entries: Iterable[FileEntry], opts) -> list[FileEntry]:
 
 
 def format_entry_name(entry: FileEntry, opts) -> str:
-
     if opts.literal:
         return entry.name
 
