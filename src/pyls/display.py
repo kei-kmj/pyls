@@ -8,7 +8,17 @@ from pathlib import Path
 
 import xattr
 
-from pyls.types import EscapeSeq, FileEntry, FileTypeChar, Format, LongFormatLine, PermChar, SizeUnit, XattrChar
+from pyls.types import (
+    EscapeSeq,
+    FileEntry,
+    FileTypeChar,
+    Format,
+    IndicatorChar,
+    LongFormatLine,
+    PermChar,
+    SizeUnit,
+    XattrChar,
+)
 
 
 def calculate_total_blocks(entries: list[FileEntry]) -> int:
@@ -192,6 +202,30 @@ def filter_ignored(entries: Iterable[FileEntry], opts) -> list[FileEntry]:
     return [e for e in entries if not should_ignore(e.name, patterns)]
 
 
+def file_type_indicator(entry: FileEntry, opts) -> str:
+    if opts.classify or opts.p or opts.file_type:
+        if entry.is_dir:
+            return IndicatorChar.DIR
+
+    if opts.classify or opts.p or opts.file_type:
+        mode = entry.file_status.mode
+
+        if entry.is_dir:
+            return IndicatorChar.DIR
+        if stat.S_ISLNK(mode):
+            return IndicatorChar.LINK
+        if stat.S_ISFIFO(mode):
+            return IndicatorChar.FIFO
+        if stat.S_ISSOCK(mode):
+            return IndicatorChar.SOCKET
+
+        exec_any = stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH
+        if opts.classify and (mode & exec_any):
+            return IndicatorChar.EXEC
+
+    return ""
+
+
 def format_entry_name(entry: FileEntry, opts) -> str:
     if opts.literal:
         return entry.name
@@ -207,7 +241,6 @@ def format_entry_name(entry: FileEntry, opts) -> str:
     if opts.quote_name:
         name = quote_double(name)
 
-    if opts.indicator_style and entry.is_dir:
-        name += "/"
+    name += file_type_indicator(entry, opts)
 
     return name

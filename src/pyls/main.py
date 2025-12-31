@@ -10,12 +10,9 @@ from pyls.core import FileEntry, collect_entries_bfs, gobble_file, print_entries
 
 def print_args(args: argparse.Namespace) -> None:
     fields = [
-        "file_type",
-        "classify",
         "hide",
         "inode",
         "recursive",
-        "size",
         "sort",
         "sort_size",
         "sort_time",

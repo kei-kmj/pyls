@@ -144,9 +144,10 @@ def print_entries(entries: list[FileEntry], opts) -> None:
     filtered_entries = filter_ignored(entries, opts)
     display_entries = list(iter_display_entries(filtered_entries, opts))
 
-    if opts.long:
+    if opts.long or opts.size:
         print(f"total {calculate_total_blocks(display_entries)}")
 
+    if opts.long:
         # 1パス目：生データ収集
         raw_lines = [format_long_line(entry, opts) for entry in display_entries]
 
@@ -163,4 +164,5 @@ def print_entries(entries: list[FileEntry], opts) -> None:
             print(format_line_with_widths(line, widths, opts))
     else:
         for entry in display_entries:
-            print(format_entry_name(entry, opts))
+            prefix = str(entry.file_status.blocks) + " " if opts.size else ""
+            print(prefix + format_entry_name(entry, opts))

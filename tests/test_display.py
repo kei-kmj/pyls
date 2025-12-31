@@ -8,6 +8,7 @@ import pytest
 from pyls.display import (
     c_escape,
     calculate_total_blocks,
+    file_type_indicator,
     filetype_char,
     filter_ignored,
     format_entry_name,
@@ -162,6 +163,9 @@ def test_format_entry_name_applies_q():
         quote_name = False
         escape = False
         indicator_style = False
+        classify = False
+        p = False
+        file_type = False
 
     e = make_file_entry(Path("x"), "a\nb", False)
     assert format_entry_name(e, Opts()) == "a?b"
@@ -174,6 +178,9 @@ def test_format_entry_name_applies_Q():
         quote_name = True
         escape = False
         indicator_style = False
+        classify = False
+        p = False
+        file_type = False
 
     e = make_file_entry(Path("x"), "abc", False)
     assert format_entry_name(e, Opts()) == '"abc"'
@@ -186,6 +193,9 @@ def test_format_entry_name_applies_q_then_Q():
         quote_name = True
         escape = False
         indicator_style = False
+        classify = False
+        p = False
+        file_type = False
 
     e = make_file_entry(Path("x"), "a\nb", False)
     assert format_entry_name(e, Opts()) == '"a?b"'
@@ -218,6 +228,9 @@ def test_b_wins_over_q():
         hide_control_chars = True
         quote_name = False
         indicator_style = False
+        classify = False
+        p = False
+        file_type = False
 
     e = make_file_entry(Path("x"), "a\nb", False)
     assert format_entry_name(e, Opts()) == "a\\nb"
@@ -241,6 +254,9 @@ def test_p_appends_slash_only_for_directories():
         hide_control_chars = False
         quote_name = False
         indicator_style = True
+        classify = False
+        p = False
+        file_type = True
 
     d = make_file_entry(Path("dir"), "dir", True)
     f = make_file_entry(Path("file"), "file", False)
@@ -352,3 +368,72 @@ def test_max_width(key, expected):
         ),
     ]
     assert max_width(lines, key) == expected
+
+
+def test_file_type_indicator_directory_with_classify():
+    class Opts:
+        classify = True
+        file_type = False
+        p = False
+
+    entry = make_file_entry(Path("dir"), is_dir=True)
+    assert file_type_indicator(entry, Opts()) == "/"
+
+
+def test_file_type_indicator_directory_with_p():
+    class Opts:
+        classify = False
+        file_type = False
+        p = True
+
+    entry = make_file_entry(Path("dir"), is_dir=True)
+    assert file_type_indicator(entry, Opts()) == "/"
+
+
+def test_file_type_indicator_file_with_classify():
+    class Opts:
+        classify = True
+        file_type = False
+        p = False
+
+    entry = make_file_entry(Path("file.txt"), is_dir=False)
+    assert file_type_indicator(entry, Opts()) == ""
+
+
+def test_file_type_indicator_no_options():
+    class Opts:
+        classify = False
+        file_type = False
+        p = False
+
+    entry = make_file_entry(Path("dir"), is_dir=True)
+    assert file_type_indicator(entry, Opts()) == ""
+
+
+def test_file_type_indicator_executable_with_classify():
+    class Opts:
+        classify = True
+        file_type = False
+        p = False
+
+    entry = make_file_entry(
+        Path("script"),
+        is_dir=False,
+        file_status=make_file_status(mode=stat.S_IFREG | 0o755),
+    )
+    assert file_type_indicator(entry, Opts()) == "*"
+
+
+def test_file_type_indicator_executable_with_file_type():
+    class Opts:
+        classify = False
+        file_type = True
+        p = False
+
+    entry = make_file_entry(
+        Path("script"),
+        is_dir=False,
+        file_status=make_file_status(mode=stat.S_IFREG | 0o755),
+    )
+
+    assert file_type_indicator(entry, Opts()) == ""

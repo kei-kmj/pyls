@@ -33,6 +33,14 @@ class SizeUnit:
     INT_DISPLAY_MIN = 10
 
 
+class IndicatorChar:
+    DIR = "/"
+    EXEC = "*"
+    LINK = "@"
+    FIFO = "|"
+    SOCKET = "="
+
+
 class EscapeSeq:
     MAP = {
         "\n": "\\n",
