@@ -10,6 +10,10 @@ from pathlib import Path
 from pyls.types import FileEntry, LongFormatLine
 
 
+def calculate_total_blocks(entries: list[FileEntry]) -> int:
+    return sum(e.file_status.blocks for e in entries)
+
+
 def filetype_char(st_mode: int) -> str:
     if stat.S_ISDIR(st_mode):
         return "d"
@@ -33,6 +37,27 @@ def permission_string(st_mode: int) -> str:
             permission.append("-")
     return "".join(permission)
 
+
+def max_width(lines: list[LongFormatLine], key) -> int:
+    return max(len(str(key(line))) for line in lines)
+
+
+def pad_value(value, width: int, right: bool = True) -> str:
+    if right:
+        return str(value).rjust(width)
+    else:
+        return str(value).ljust(width)
+
+
+def format_line_with_widths(line: LongFormatLine, widths: dict[str, int]) -> str:
+    return (
+        f"{line.mode} "
+        f"{pad_value(line.nlink, widths['nlink'])} "
+        f"{pad_value(line.owner, widths['owner'], right=False)}  "
+        f"{pad_value(line.group, widths['group'], right=False)}  "
+        f"{pad_value(line.size, widths['size'])} "
+        f"{line.mtime} {line.name}"
+    )
 
 def extended_attribute_char(path: Path) -> str:
     try:

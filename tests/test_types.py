@@ -12,4 +12,4 @@ def test_long_format_line_str():
         name="test.txt",
     )
 
-    assert str(line) == "-rw-r--r-- 1 keiko staff 256 Dec 29 15:17 test.txt"
+    assert str(line) == "-rw-r--r-- 1 keiko  staff 256 Dec 29 15:17 test.txt"

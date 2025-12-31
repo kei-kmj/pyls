@@ -22,8 +22,9 @@ def make_file_status(
     gid: int = 1000,
     size: int = 0,
     mtime: float = 0.0,
+    blocks: int = 512,
 ) -> FileStatus:
-    return FileStatus(mode=mode, nlink=nlink, uid=uid, gid=gid, size=size, mtime=mtime)
+    return FileStatus(mode=mode, nlink=nlink, uid=uid, gid=gid, size=size, mtime=mtime, blocks=blocks)
 
 
 def make_file_entry(

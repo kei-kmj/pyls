@@ -1,7 +1,8 @@
 import stat
 from pathlib import Path
 
-from pyls.display import filter_ignored, format_entry_name, iter_display_entries, format_long_line
+from pyls.display import filter_ignored, format_entry_name, iter_display_entries, format_long_line, \
+    calculate_total_blocks, max_width, format_line_with_widths
 from pyls.types import ExitStatus, FileEntry, ScanPathsResult, FileStatus
 
 
@@ -138,8 +139,26 @@ def move_dirs_to_pending(
 
 def print_entries(entries: list[FileEntry], opts) -> None:
     filtered_entries = filter_ignored(entries, opts)
-    for entry in iter_display_entries(filtered_entries, opts):
-        if opts.long:
-            print(format_long_line(entry, opts))
-        else:
+    display_entries = list(iter_display_entries(filtered_entries, opts))
+
+    if opts.long:
+        print(f"total {calculate_total_blocks(display_entries)}")
+
+        # 1パス目：生データ収集
+        raw_lines = [format_long_line(entry, opts) for entry in display_entries]
+
+        # 幅計算
+        widths = {
+            'nlink': max_width(raw_lines, lambda l: l.nlink),
+            'owner': max_width(raw_lines, lambda l: l.owner),
+            'group': max_width(raw_lines, lambda l: l.group),
+            'size': max_width(raw_lines, lambda l: l.size),
+        }
+
+        # 2パス目：整形して出力
+        for line in raw_lines:
+            print(format_line_with_widths(line, widths))
+    else:
+        for entry in display_entries:
             print(format_entry_name(entry, opts))
+
