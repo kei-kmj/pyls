@@ -3,19 +3,27 @@ import stat
 from datetime import datetime
 from pathlib import Path
 
+import pytest
+
 from pyls.display import (
     c_escape,
+    calculate_total_blocks,
     filetype_char,
     filter_ignored,
     format_entry_name,
+    format_line_with_widths,
     format_long_line,
     format_mtime,
     group_name,
+    human_readable_size,
+    max_width,
+    pad_value,
     permission_string,
     quote_double,
     replace_nonprintable,
     user_name,
 )
+from pyls.types import LongFormatLine
 from tests.conftest import make_file_entry, make_file_status
 
 
@@ -88,6 +96,7 @@ def test_format_long_line():
         escape = False
         hide_control_chars = False
         quote_name = False
+        human_readable = False
         p = False
 
     entry = make_file_entry(
@@ -107,7 +116,7 @@ def test_format_long_line():
     assert line.nlink == 1
     assert line.owner == "1000"
     assert line.group == "1000"
-    assert line.size == 256
+    assert line.size == "256"
     assert line.mtime == "Dec 29 15:17"
     assert line.name == "test.txt"
 
@@ -238,3 +247,108 @@ def test_p_appends_slash_only_for_directories():
 
     assert format_entry_name(d, Opts()) == "dir/"
     assert format_entry_name(f, Opts()) == "file"
+
+
+def test_human_readable_size_bytes():
+    assert human_readable_size(500) == " 500B"
+
+
+def test_human_readable_size_kilobytes():
+    assert human_readable_size(65444) == "64K"
+
+
+def test_human_readable_size_megabytes():
+    assert human_readable_size(1048576) == " 1.0M"
+
+
+def test_pad_value_right():
+    assert pad_value(42, 5) == "   42"
+
+
+def test_pad_value_left():
+    assert pad_value("hello", 10, right=False) == "hello     "
+
+
+def test_format_line_with_widths(sample_long_format_line, sample_widths):
+    class Opts:
+        no_owner = False
+        no_group = False
+
+    result = format_line_with_widths(sample_long_format_line, sample_widths, Opts())
+    assert "keiko" in result
+    assert "staff" in result
+    assert "1024" in result
+
+
+def test_format_line_with_widths_no_owner(sample_long_format_line, sample_widths):
+    class Opts:
+        no_owner = True
+        no_group = False
+
+    result = format_line_with_widths(sample_long_format_line, sample_widths, Opts())
+    assert "keiko" not in result
+    assert "staff" in result
+
+
+def test_format_line_with_widths_no_group(sample_long_format_line, sample_widths):
+    class Opts:
+        no_owner = False
+        no_group = True
+
+    result = format_line_with_widths(sample_long_format_line, sample_widths, Opts())
+    assert "keiko" in result
+    assert "staff" not in result
+
+
+def test_calculate_total_blocks():
+    entries = [
+        make_file_entry(Path("a.txt"), file_status=make_file_status(blocks=8)),
+        make_file_entry(Path("b.txt"), file_status=make_file_status(blocks=16)),
+        make_file_entry(Path("c.txt"), file_status=make_file_status(blocks=24)),
+    ]
+    assert calculate_total_blocks(entries) == 48
+
+
+def test_calculate_total_blocks_empty():
+    assert calculate_total_blocks([]) == 0
+
+
+@pytest.mark.parametrize(
+    "key,expected",
+    [
+        (lambda x: x.nlink, 3),  # 1, 100, 10 → "100" で 3文字
+        (lambda x: x.owner, 14),  # "short", "longerusername", "medium" → 14文字
+        (lambda x: x.size, 4),  # "100", "1024", "50" → 4文字
+    ],
+)
+def test_max_width(key, expected):
+    lines = [
+        LongFormatLine(
+            mode="-rw-r--r--@",
+            nlink=1,
+            owner="short",
+            group="staff",
+            size="100",
+            mtime="Dec 31 12:00",
+            name="a.txt",
+        ),
+        LongFormatLine(
+            mode="-rw-r--r--@",
+            nlink=100,
+            owner="longerusername",
+            group="staff",
+            size="1024",
+            mtime="Dec 31 12:00",
+            name="b.txt",
+        ),
+        LongFormatLine(
+            mode="-rw-r--r--@",
+            nlink=10,
+            owner="medium",
+            group="staff",
+            size="50",
+            mtime="Dec 31 12:00",
+            name="c.txt",
+        ),
+    ]
+    assert max_width(lines, key) == expected

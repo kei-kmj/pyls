@@ -7,7 +7,7 @@ def test_long_format_line_str():
         nlink=1,
         owner="keiko",
         group="staff",
-        size=256,
+        size="256",
         mtime="Dec 29 15:17",
         name="test.txt",
     )

@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pytest
 
-from pyls.types import FileEntry, FileStatus
+from pyls.types import FileEntry, FileStatus, LongFormatLine
 
 
 @pytest.fixture(scope="session")
@@ -39,3 +39,21 @@ def make_file_entry(
         is_dir=is_dir,
         file_status=file_status or make_file_status(),
     )
+
+
+@pytest.fixture
+def sample_long_format_line() -> LongFormatLine:
+    return LongFormatLine(
+        mode="-rw-r--r--@",
+        nlink=1,
+        owner="keiko",
+        group="staff",
+        size="1024",
+        mtime="Dec 31 12:00",
+        name="test.txt",
+    )
+
+
+@pytest.fixture
+def sample_widths() -> dict[str, int]:
+    return {"nlink": 1, "owner": 5, "group": 5, "size": 4}

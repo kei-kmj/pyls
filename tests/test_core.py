@@ -176,3 +176,41 @@ def test_move_dirs_to_pending_does_nothing_when_directory_opt_is_true(sample_000
 
     assert pending_queue == []
     assert {e.name for e in entries} >= {"dir_a", "dir_b"}
+
+
+def test_extract_dirs_from_files():
+    cwd_entries = [
+        make_file_entry(Path("dir1"), is_dir=True),
+        make_file_entry(Path("file1.txt"), is_dir=False),
+        make_file_entry(Path("dir2"), is_dir=True),
+        make_file_entry(Path("file2.txt"), is_dir=False),
+    ]
+    pending_dirs = []
+
+    class Opts:
+        directory = False
+
+    extract_dirs_from_files(cwd_entries, pending_dirs, Opts())
+
+    assert len(pending_dirs) == 2
+    assert Path("dir1") in pending_dirs
+    assert Path("dir2") in pending_dirs
+
+    assert len(cwd_entries) == 2
+    assert all(not e.is_dir for e in cwd_entries)
+
+
+def test_extract_dirs_from_files_with_directory_opt():
+    cwd_entries = [
+        make_file_entry(Path("dir1"), is_dir=True),
+        make_file_entry(Path("file1.txt"), is_dir=False),
+    ]
+    pending_dirs = []
+
+    class Opts:
+        directory = True
+
+    extract_dirs_from_files(cwd_entries, pending_dirs, Opts())
+
+    assert len(cwd_entries) == 2
+    assert len(pending_dirs) == 0

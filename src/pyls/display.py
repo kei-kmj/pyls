@@ -8,7 +8,7 @@ from pathlib import Path
 
 import xattr
 
-from pyls.types import FileEntry, LongFormatLine
+from pyls.types import EscapeSeq, FileEntry, FileTypeChar, Format, LongFormatLine, PermChar, SizeUnit, XattrChar
 
 
 def calculate_total_blocks(entries: list[FileEntry]) -> int:
@@ -17,10 +17,10 @@ def calculate_total_blocks(entries: list[FileEntry]) -> int:
 
 def filetype_char(st_mode: int) -> str:
     if stat.S_ISDIR(st_mode):
-        return "d"
+        return FileTypeChar.DIR
     if stat.S_ISLNK(st_mode):
-        return "l"
-    return "-"
+        return FileTypeChar.LINK
+    return FileTypeChar.REGULAR
 
 
 def permission_string(st_mode: int) -> str:
@@ -38,18 +38,19 @@ def permission_string(st_mode: int) -> str:
     ):
         if st_mode & who:
             if who in (stat.S_IWUSR, stat.S_IWGRP, stat.S_IWOTH):
-                permission.append("w")
+                permission.append(PermChar.WRITE)
             elif who in (stat.S_IRUSR, stat.S_IRGRP, stat.S_IROTH):
-                permission.append("r")
+                permission.append(PermChar.READ)
             else:
-                permission.append("x")
+                permission.append(PermChar.EXEC)
         else:
-            permission.append("-")
+            permission.append(PermChar.NONE)
     return "".join(permission)
 
 
 def max_width(lines: list[LongFormatLine], key) -> int:
-    return max(len(str(key(line))) for line in lines)
+    widths = [len(str(key(line))) for line in lines]
+    return max(widths)
 
 
 def pad_value(value, width: int, right: bool = True) -> str:
@@ -63,7 +64,7 @@ def format_line_with_widths(line: LongFormatLine, widths: dict[str, int], opts) 
     parts = [line.mode, pad_value(line.nlink, widths["nlink"])]
 
     if not opts.no_owner:
-        parts.append(pad_value(line.owner, widths["owner"], right=False))
+        parts.append(pad_value(line.owner, widths["owner"], right=False) + " ")
 
     if not opts.no_group:
         parts.append(pad_value(line.group, widths["group"], right=False))
@@ -79,9 +80,9 @@ def format_line_with_widths(line: LongFormatLine, widths: dict[str, int], opts) 
 def extended_attribute_char(path: Path) -> str:
     try:
         attrs = xattr.listxattr(str(path))
-        return "@" if attrs else " "
+        return XattrChar.PRESENT if attrs else XattrChar.ABSENT
     except OSError:
-        return " "
+        return XattrChar.ABSENT
 
 
 def user_name(uid: int, numeric: bool) -> str:
@@ -104,18 +105,35 @@ def group_name(gid: int, numeric: bool) -> str:
 
 def format_mtime(epoch: float) -> str:
     dt = datetime.fromtimestamp(epoch)
-    return dt.strftime("%b %d %H:%M")
+    return dt.strftime(Format.MTIME)
+
+
+def human_readable_size(size: int) -> str:
+    if size < SizeUnit.THRESHOLD:
+        return f" {size}B"
+
+    fsize = float(size)
+    for unit in ["K", "M", "G", "T", "P"]:
+        fsize /= SizeUnit.THRESHOLD
+        if fsize < SizeUnit.THRESHOLD:
+            return f"{fsize:.0f}{unit}" if fsize >= SizeUnit.INT_DISPLAY_MIN else f" {fsize:.1f}{unit}"
+    return f" {fsize:.1f}P"
 
 
 def format_long_line(entry: FileEntry, opts) -> LongFormatLine:
     status = entry.file_status
 
+    if opts.human_readable:
+        size = human_readable_size(status.size)
+    else:
+        size = str(status.size)
+
     return LongFormatLine(
         mode=mode_string(status.mode) + extended_attribute_char(entry.path),
         nlink=status.nlink,
-        owner=user_name(status.uid, numeric=getattr(opts, "numeric_uid_gid", False)),
-        group=group_name(status.gid, numeric=getattr(opts, "numeric_uid_gid", False)),
-        size=status.size,
+        owner=user_name(status.uid, numeric=opts.numeric_uid_gid),
+        group=group_name(status.gid, numeric=opts.numeric_uid_gid),
+        size=size,
         mtime=format_mtime(status.mtime),
         name=format_entry_name(entry, opts),
     )
@@ -129,18 +147,8 @@ def c_escape(s: str) -> str:
     output: list[str] = []
 
     for ch in s:
-        if ch == "\n":
-            output.append("\\n")
-            continue
-        if ch == "\t":
-            output.append("\\t")
-            continue
-        if ch == "\r":
-            output.append("\\r")
-            continue
-
-        if ch == "\\":
-            output.append("\\\\")
+        if ch in EscapeSeq.MAP:
+            output.append(EscapeSeq.MAP[ch])
             continue
 
         if ch.isprintable():
@@ -178,7 +186,7 @@ def should_ignore(name: str, patterns: list[str]) -> bool:
 
 
 def filter_ignored(entries: Iterable[FileEntry], opts) -> list[FileEntry]:
-    patterns: list[str] = getattr(opts, "ignore", [])
+    patterns = opts.ignore
     if not patterns:
         return list(entries)
     return [e for e in entries if not should_ignore(e.name, patterns)]

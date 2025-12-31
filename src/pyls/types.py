@@ -9,6 +9,46 @@ class ExitStatus(IntEnum):
     ERROR = 1
 
 
+class FileTypeChar:
+    DIR = "d"
+    LINK = "l"
+    REGULAR = "-"
+
+
+class PermChar:
+    READ = "r"
+    WRITE = "w"
+    EXEC = "x"
+    NONE = "-"
+
+
+class XattrChar:
+    PRESENT = "@"
+    ABSENT = " "
+
+
+class SizeUnit:
+    THRESHOLD = 1024
+    UNITS = ("B", "K", "M", "G", "T", "P")
+    INT_DISPLAY_MIN = 10
+
+
+class EscapeSeq:
+    MAP = {
+        "\n": "\\n",
+        "\t": "\\t",
+        "\r": "\\r",
+        "\\": "\\\\",
+    }
+
+
+class Format:
+    MTIME = "%b %d %H:%M"
+    QUOTE = '"'
+    DIR_INDICATOR = "/"
+    NONPRINTABLE = "?"
+
+
 @dataclass(frozen=True)
 class FileStatus:
     mode: int
@@ -38,7 +78,7 @@ class LongFormatLine:
     nlink: int
     owner: str
     group: str
-    size: int
+    size: str
     mtime: str
     name: str
 

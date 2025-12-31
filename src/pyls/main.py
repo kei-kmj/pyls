@@ -12,7 +12,6 @@ def print_args(args: argparse.Namespace) -> None:
     fields = [
         "file_type",
         "classify",
-        "human_readable",
         "hide",
         "inode",
         "recursive",
@@ -25,7 +24,6 @@ def print_args(args: argparse.Namespace) -> None:
         "sort_version",
         "sort_extension",
         "width",
-        "context",
     ]
     for f in fields:
         if not hasattr(args, f):
