@@ -10,7 +10,6 @@ from pyls.display import (
     quote_double,
     replace_nonprintable, filetype_char, permission_string, format_mtime, format_long_line, group_name, user_name,
 )
-from pyls.types import FileEntry
 from tests.conftest import make_file_entry, make_file_status
 
 
@@ -42,16 +41,18 @@ def test_permission_string_none():
     assert permission_string(0o000) == "---------"
 
 
-def test_format_mtime():
-    # 2024-12-29 15:17:00
-    epoch = datetime(2024, 12, 29, 15, 17, 0).timestamp()
-    assert format_mtime(epoch) == "Dec 29 15:17"
-
-
 def test_user_name_resolves_current_user():
     uid = os.getuid()
     result = user_name(uid, numeric=False)
     assert not result.isdigit()
+
+
+def test_user_name_numeric():
+    assert user_name(1000, numeric=True) == "1000"
+
+
+def test_user_name_unknown_uid_falls_back_to_number():
+    assert user_name(99999, numeric=False) == "99999"
 
 
 def test_group_name_resolves_current_group():
@@ -60,20 +61,19 @@ def test_group_name_resolves_current_group():
     assert not result.isdigit()
 
 
-def test_user_name_unknown_uid_falls_back_to_number():
-    assert user_name(99999, numeric=False) == "99999"
+def test_group_name_numeric():
+    assert group_name(1000, numeric=True) == "1000"
 
 
 def test_group_name_unknown_gid_falls_back_to_number():
     assert group_name(99999, numeric=False) == "99999"
 
 
-def test_user_name_numeric():
-    assert user_name(1000, numeric=True) == "1000"
+def test_format_mtime():
+    # 2024-12-29 15:17:00
+    epoch = datetime(2024, 12, 29, 15, 17, 0).timestamp()
+    assert format_mtime(epoch) == "Dec 29 15:17"
 
-
-def test_group_name_numeric():
-    assert group_name(1000, numeric=True) == "1000"
 
 def test_format_long_line():
     class Opts:
@@ -97,7 +97,7 @@ def test_format_long_line():
     )
     line = format_long_line(entry, Opts())
 
-    assert line.mode == "-rw-r--r--"
+    assert line.mode == "-rw-r--r-- "
     assert line.nlink == 1
     assert line.owner == "1000"
     assert line.group == "1000"
@@ -116,10 +116,28 @@ def test_replace_nonprintable_replaces_control_chars_with_question_mark():
     assert replace_nonprintable("a\tb") == "a?b"
 
 
-
 def test_quote_double_escapes_quote_and_backslash():
     assert quote_double('a"b') == '"a\\"b"'
     assert quote_double(r"a\b") == '"a\\\\b"'
+
+
+def test_ignore_filters_matching_names():
+    class Opts:
+        ignore = ["*.py"]
+        unsorted = False
+        reverse = False
+        literal_name = True
+        escape = False
+        hide_control_chars = False
+        quote_name = False
+        p = False
+
+    entries = [
+        make_file_entry(Path("a.py")),
+        make_file_entry(Path("b.txt")),
+    ]
+    filtered = filter_ignored(entries, Opts())
+    assert [e.name for e in filtered] == ["b.txt"]
 
 
 def test_format_entry_name_applies_q():
@@ -190,6 +208,7 @@ def test_b_wins_over_q():
     e = make_file_entry(Path("x"), "a\nb", False)
     assert format_entry_name(e, Opts()) == "a\\nb"
 
+
 def test_N_disables_b():
     class Opts:
         literal = True
@@ -214,22 +233,3 @@ def test_p_appends_slash_only_for_directories():
 
     assert format_entry_name(d, Opts()) == "dir/"
     assert format_entry_name(f, Opts()) == "file"
-
-
-def test_ignore_filters_matching_names():
-    class Opts:
-        ignore = ["*.py"]
-        unsorted = False
-        reverse = False
-        literal_name = True
-        escape = False
-        hide_control_chars = False
-        quote_name = False
-        p = False
-
-    entries = [
-        make_file_entry(Path("a.py")),
-        make_file_entry(Path("b.txt")),
-    ]
-    filtered = filter_ignored(entries, Opts())
-    assert [e.name for e in filtered] == ["b.txt"]

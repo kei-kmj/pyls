@@ -2,8 +2,10 @@ import fnmatch
 import grp
 import pwd
 import stat
+import xattr
 from collections.abc import Iterable
 from datetime import datetime
+from pathlib import Path
 
 from pyls.types import FileEntry, LongFormatLine
 
@@ -32,6 +34,14 @@ def permission_string(st_mode: int) -> str:
     return "".join(permission)
 
 
+def extended_attribute_char(path: Path) -> str:
+    try:
+        attrs = xattr.listxattr(str(path))
+        return "@" if attrs else " "
+    except (OSError, IOError):
+        return " "
+
+
 def user_name(uid: int, numeric: bool) -> str:
     if numeric:
         return str(uid)
@@ -58,7 +68,7 @@ def format_long_line(entry: FileEntry, opts) -> LongFormatLine:
     status = entry.file_status
 
     return LongFormatLine(
-        mode=mode_string(status.mode),
+        mode=mode_string(status.mode) + extended_attribute_char(entry.path),
         nlink=status.nlink,
         owner=user_name(status.uid, numeric=getattr(opts, "numeric_uid_gid", False)),
         group=group_name(status.gid, numeric=getattr(opts, "numeric_uid_gid", False)),

@@ -18,62 +18,40 @@ class Opts:
     almost_all = False
     recursive = False
 
-def test_scan_dir_children_succeeds_for_existing_dir(sample_000000_dir):
 
-    entries = []
-    status = scan_dir_children(sample_000000_dir, Opts(), entries=entries)
+def test_gobble_file_file_not_found(capsys):
+    cwd_entries = []
 
-    assert status == 0
-    assert len(entries) == 12
+    class Opts:
+        pass
 
-def test_scan_dir_children_fails_for_nonexistent_dir():
+    result = gobble_file(Path("/nonexistent/path/to/file"), Opts(), cwd_entries)
 
-    non_existent_dir = Path("/path/to/nonexistent/dir")
-    entries = []
-    status = scan_dir_children(non_existent_dir, Opts(), entries=entries)
-
-    assert status == 1
+    assert result == ExitStatus.ERROR
+    assert cwd_entries == []
+    captured = capsys.readouterr()
+    assert "No such file or directory" in captured.out
 
 
-def test_scan_dir_children_fails_for_permission_error(sample_000000_dir, monkeypatch, capsys):
-    def _raise_permission_error(self):
-        raise PermissionError
+def test_gobble_file_permission_denied(capsys, tmp_path):
+    # パーミッションなしのファイルを作成
+    restricted = tmp_path / "restricted"
+    restricted.mkdir()
+    restricted.chmod(0o000)
 
-    monkeypatch.setattr(Path, "iterdir", _raise_permission_error)
+    cwd_entries = []
 
-    entries = []
-    status = scan_dir_children(sample_000000_dir, Opts(), entries)
+    class Opts:
+        pass
 
-    assert status == 1
-    out = capsys.readouterr().out
-    assert "pyls: cannot access" in out
-
-
-def test_move_dirs_to_pending_moves_dirs_and_keeps_files(sample_000000_dir):
-    entries = []
-    assert scan_dir_children(sample_000000_dir, Opts(), entries) == 0
-
-    pending_dirs = []
-    move_dirs_to_pending(entries, pending_dirs, Opts())
-    assert len(pending_dirs) == 2
-    assert {p.name for p in pending_dirs} == {"dir_a", "dir_b"}
-    assert all(not e.is_dir for e in entries)
-    assert len(entries) == 10
-
-
-def test_move_dirs_to_pending_does_nothing_when_directory_opt_is_true(sample_000000_dir):
-    class DirOpts:
-        directory = True
-        all = True
-
-    entries = []
-    assert scan_dir_children(sample_000000_dir, DirOpts(), entries) == 0
-
-    pending_queue = []
-    move_dirs_to_pending(entries, pending_queue, DirOpts())
-
-    assert pending_queue == []
-    assert {e.name for e in entries} >= {"dir_a", "dir_b"}
+    try:
+        result = gobble_file(restricted / "file", Opts(), cwd_entries)
+        assert result == ExitStatus.ERROR
+        captured = capsys.readouterr()
+        assert "Permission denied" in captured.out
+    finally:
+        # 後片付け
+        restricted.chmod(0o755)
 
 
 @pytest.mark.parametrize(
@@ -110,20 +88,36 @@ def test_should_include(all_flag, almost_all_flag, name, expected):
     assert should_include(name, opts) is expected
 
 
-def test_collect_entries_bfs_returns_scan_paths_result_for_existing_dir(sample_000000_dir):
-    result = collect_entries_bfs([sample_000000_dir], Opts())
+def test_scan_dir_children_succeeds_for_existing_dir(sample_000000_dir):
 
-    assert result.exit_status == 0
-    assert sample_000000_dir in result.dir_queue
+    entries = []
+    status = scan_dir_children(sample_000000_dir, Opts(), entries=entries)
 
-def test_collect_entries_bfs_returns_scan_paths_result_for_existing_file(sample_000000_dir):
-    p = sample_000000_dir / "file_0000.txt"
+    assert status == 0
+    assert len(entries) == 12
 
-    result = collect_entries_bfs([p], Opts())
 
-    assert result.exit_status == 0
-    assert result.dir_queue == []
-    assert {e.name for e in result.entries} == {"file_0000.txt"}
+def test_scan_dir_children_fails_for_nonexistent_dir():
+
+    non_existent_dir = Path("/path/to/nonexistent/dir")
+    entries = []
+    status = scan_dir_children(non_existent_dir, Opts(), entries=entries)
+
+    assert status == 1
+
+
+def test_scan_dir_children_fails_for_permission_error(sample_000000_dir, monkeypatch, capsys):
+    def _raise_permission_error(self):
+        raise PermissionError
+
+    monkeypatch.setattr(Path, "iterdir", _raise_permission_error)
+
+    entries = []
+    status = scan_dir_children(sample_000000_dir, Opts(), entries)
+
+    assert status == 1
+    out = capsys.readouterr().out
+    assert "pyls: cannot access" in out
 
 
 def test_extract_dirs_from_files_does_nothing_when_directory_opt_is_true():
@@ -143,36 +137,45 @@ def test_extract_dirs_from_files_does_nothing_when_directory_opt_is_true():
     assert pending_dirs == []
 
 
-def test_gobble_file_file_not_found(capsys):
-    cwd_entries = []
+def test_collect_entries_bfs_returns_scan_paths_result_for_existing_dir(sample_000000_dir):
+    result = collect_entries_bfs([sample_000000_dir], Opts())
 
-    class Opts:
-        pass
-
-    result = gobble_file(Path("/nonexistent/path/to/file"), Opts(), cwd_entries)
-
-    assert result == ExitStatus.ERROR
-    assert cwd_entries == []
-    captured = capsys.readouterr()
-    assert "No such file or directory" in captured.out
+    assert result.exit_status == 0
+    assert sample_000000_dir in result.dir_queue
 
 
-def test_gobble_file_permission_denied(capsys, tmp_path):
-    # パーミッションなしのファイルを作成
-    restricted = tmp_path / "restricted"
-    restricted.mkdir()
-    restricted.chmod(0o000)
+def test_collect_entries_bfs_returns_scan_paths_result_for_existing_file(sample_000000_dir):
+    p = sample_000000_dir / "file_0000.txt"
 
-    cwd_entries = []
+    result = collect_entries_bfs([p], Opts())
 
-    class Opts:
-        pass
+    assert result.exit_status == 0
+    assert result.dir_queue == []
+    assert {e.name for e in result.entries} == {"file_0000.txt"}
 
-    try:
-        result = gobble_file(restricted / "file", Opts(), cwd_entries)
-        assert result == ExitStatus.ERROR
-        captured = capsys.readouterr()
-        assert "Permission denied" in captured.out
-    finally:
-        # 後片付け
-        restricted.chmod(0o755)
+
+def test_move_dirs_to_pending_moves_dirs_and_keeps_files(sample_000000_dir):
+    entries = []
+    assert scan_dir_children(sample_000000_dir, Opts(), entries) == 0
+
+    pending_dirs = []
+    move_dirs_to_pending(entries, pending_dirs, Opts())
+    assert len(pending_dirs) == 2
+    assert {p.name for p in pending_dirs} == {"dir_a", "dir_b"}
+    assert all(not e.is_dir for e in entries)
+    assert len(entries) == 10
+
+
+def test_move_dirs_to_pending_does_nothing_when_directory_opt_is_true(sample_000000_dir):
+    class DirOpts:
+        directory = True
+        all = True
+
+    entries = []
+    assert scan_dir_children(sample_000000_dir, DirOpts(), entries) == 0
+
+    pending_queue = []
+    move_dirs_to_pending(entries, pending_queue, DirOpts())
+
+    assert pending_queue == []
+    assert {e.name for e in entries} >= {"dir_a", "dir_b"}
