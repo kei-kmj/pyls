@@ -6,8 +6,10 @@ from pyls.core import (
     collect_entries_bfs,
     move_dirs_to_pending,
     scan_dir_children,
-    should_include,
+    should_include, extract_dirs_from_files, gobble_file,
 )
+from pyls.types import ExitStatus
+from tests.conftest import make_file_entry
 
 
 class Opts:
@@ -95,7 +97,7 @@ def test_move_dirs_to_pending_does_nothing_when_directory_opt_is_true(sample_000
         (True, False, ".", True),
         (True, False, "..", True),
 
-        # -a と -A 同時: -a が勝つ
+        # -a -A: すべて含める（-a が優先）
         (True, True, ".", True),
         (True, True, "..", True),
         (True, True, ".hidden", True),
@@ -122,3 +124,55 @@ def test_collect_entries_bfs_returns_scan_paths_result_for_existing_file(sample_
     assert result.exit_status == 0
     assert result.dir_queue == []
     assert {e.name for e in result.entries} == {"file_0000.txt"}
+
+
+def test_extract_dirs_from_files_does_nothing_when_directory_opt_is_true():
+    class Opts:
+        directory = True
+
+    cwd_entries = [
+        make_file_entry(Path("dir1"), is_dir=True),
+        make_file_entry(Path("file.txt"), is_dir=False),
+    ]
+    pending_dirs = []
+
+    extract_dirs_from_files(cwd_entries, pending_dirs, Opts())
+
+    # 何も変わらない
+    assert len(cwd_entries) == 2
+    assert pending_dirs == []
+
+
+def test_gobble_file_file_not_found(capsys):
+    cwd_entries = []
+
+    class Opts:
+        pass
+
+    result = gobble_file(Path("/nonexistent/path/to/file"), Opts(), cwd_entries)
+
+    assert result == ExitStatus.ERROR
+    assert cwd_entries == []
+    captured = capsys.readouterr()
+    assert "No such file or directory" in captured.out
+
+
+def test_gobble_file_permission_denied(capsys, tmp_path):
+    # パーミッションなしのファイルを作成
+    restricted = tmp_path / "restricted"
+    restricted.mkdir()
+    restricted.chmod(0o000)
+
+    cwd_entries = []
+
+    class Opts:
+        pass
+
+    try:
+        result = gobble_file(restricted / "file", Opts(), cwd_entries)
+        assert result == ExitStatus.ERROR
+        captured = capsys.readouterr()
+        assert "Permission denied" in captured.out
+    finally:
+        # 後片付け
+        restricted.chmod(0o755)

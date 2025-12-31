@@ -10,5 +10,6 @@ __pycache__/
 build/
 dist/
 
-# Test fixtures
+# Test
 test_fixture/
+.coverage
