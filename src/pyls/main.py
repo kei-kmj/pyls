@@ -5,7 +5,7 @@ import sys
 from pathlib import Path
 
 from pyls.cli import build_parser
-from pyls.core import FileEntry, collect_entries_bfs, gobble_file, print_names
+from pyls.core import FileEntry, collect_entries_bfs, gobble_file, print_entries
 
 
 def print_args(args: argparse.Namespace) -> None:
@@ -55,11 +55,11 @@ def main(argv: list[str] | None = None) -> None:
     status = 0
     paths = [Path(p) for p in (args.paths if args.paths else ["."])]
     for p in paths:
-        status = max(status, gobble_file(Path(p), args, cwd_entries))
+        status = max(status, gobble_file(Path(p), args, cwd_entries, ))
 
     print_args(args)
     # for p in args.paths:
     #     print(p)
 
     result = collect_entries_bfs(paths, args)
-    print_names(result.entries, args)
+    print_entries(result.entries, args)

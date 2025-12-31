@@ -1,8 +1,8 @@
 import stat
 from pathlib import Path
 
-from pyls.display import filter_ignored, format_entry_name, iter_display_entries
-from pyls.types import ExitStatus, FileEntry, ScanPathsResult
+from pyls.display import filter_ignored, format_entry_name, iter_display_entries, format_long_line
+from pyls.types import ExitStatus, FileEntry, ScanPathsResult, FileStatus
 
 
 def gobble_file(
@@ -21,9 +21,11 @@ def gobble_file(
         print(f"pyls: cannot access '{path}': Permission denied")
         return ExitStatus.ERROR
 
+    file_status = FileStatus.from_stat_result(st)
+
     is_dir = stat.S_ISDIR(st.st_mode)
     name = path.name or str(path)
-    entry = FileEntry(path=path, name=name, is_dir=is_dir )
+    entry = FileEntry(path=path, name=name, is_dir=is_dir, file_status=file_status)
     cwd_entries.append(entry)
     return ExitStatus.OK
 
@@ -54,8 +56,10 @@ def scan_dir_children(
         return ExitStatus.ERROR
 
     if opts.all:
-        entries.append(FileEntry(path=dir_path, name=".", is_dir=True))
-        entries.append(FileEntry(path=dir_path.parent, name="..", is_dir=True))
+        dot_status = FileStatus.from_stat_result(dir_path.lstat())
+        dotdot_status = FileStatus.from_stat_result(dir_path.parent.lstat())
+        entries.append(FileEntry(path=dir_path, name=".", is_dir=True, file_status=dot_status))
+        entries.append(FileEntry(path=dir_path.parent, name="..", is_dir=True, file_status=dotdot_status))
 
     exit_status = ExitStatus.OK
     for child in children:
@@ -132,7 +136,10 @@ def move_dirs_to_pending(
 
 
 
-def print_names(entries: list[FileEntry], opts) -> None:
+def print_entries(entries: list[FileEntry], opts) -> None:
     filtered_entries = filter_ignored(entries, opts)
     for entry in iter_display_entries(filtered_entries, opts):
-        print(format_entry_name(entry, opts))
+        if opts.long:
+            print(format_long_line(entry, opts))
+        else:
+            print(format_entry_name(entry, opts))

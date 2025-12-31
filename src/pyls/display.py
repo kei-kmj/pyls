@@ -1,7 +1,76 @@
 import fnmatch
+import grp
+import pwd
+import stat
 from collections.abc import Iterable
+from datetime import datetime
 
-from pyls.types import FileEntry
+from pyls.types import FileEntry, LongFormatLine
+
+
+def filetype_char(st_mode: int) -> str:
+    if stat.S_ISDIR(st_mode):
+        return "d"
+    if stat.S_ISLNK(st_mode):
+        return "l"
+    return "-"
+
+def permission_string(st_mode: int) -> str:
+    permission = []
+    for who in (stat.S_IRUSR, stat.S_IWUSR, stat.S_IXUSR,
+                stat.S_IRGRP, stat.S_IWGRP, stat.S_IXGRP,
+                stat.S_IROTH, stat.S_IWOTH, stat.S_IXOTH):
+        if st_mode & who:
+            if who in (stat.S_IWUSR, stat.S_IWGRP, stat.S_IWOTH):
+                permission.append("w")
+            elif who in (stat.S_IRUSR, stat.S_IRGRP, stat.S_IROTH):
+                permission.append("r")
+            else:
+                permission.append("x")
+        else:
+            permission.append("-")
+    return "".join(permission)
+
+
+def user_name(uid: int, numeric: bool) -> str:
+    if numeric:
+        return str(uid)
+    try:
+        return pwd.getpwuid(uid).pw_name
+    except KeyError:
+        return str(uid)
+
+def group_name(gid: int, numeric: bool) -> str:
+    if numeric:
+        return str(gid)
+    try:
+        return grp.getgrgid(gid).gr_name
+    except KeyError:
+        return str(gid)
+
+
+def format_mtime(epoch: float) -> str:
+    dt = datetime.fromtimestamp(epoch)
+    return dt.strftime("%b %d %H:%M")
+
+
+def format_long_line(entry: FileEntry, opts) -> LongFormatLine:
+    status = entry.file_status
+
+    return LongFormatLine(
+        mode=mode_string(status.mode),
+        nlink=status.nlink,
+        owner=user_name(status.uid, numeric=getattr(opts, "numeric_uid_gid", False)),
+        group=group_name(status.gid, numeric=getattr(opts, "numeric_uid_gid", False)),
+        size=status.size,
+        mtime=format_mtime(status.mtime),
+        name=format_entry_name(entry, opts),
+    )
+
+
+def mode_string(st_mode: int) -> str:
+    return filetype_char(st_mode) + permission_string(st_mode)
+
 
 
 def c_escape(s: str) -> str:

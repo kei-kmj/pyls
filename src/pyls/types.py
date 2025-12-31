@@ -9,10 +9,45 @@ class ExitStatus(IntEnum):
 
 
 @dataclass(frozen=True)
+class FileStatus:
+    mode: int
+    nlink: int
+    uid: int
+    gid: int
+    size: int
+    mtime: float
+
+    @classmethod
+    def from_stat_result(cls, st: os.stat_result) -> "FileStatus":
+        return cls(
+            mode=st.st_mode,
+            nlink=st.st_nlink,
+            uid=st.st_uid,
+            gid=st.st_gid,
+            size=st.st_size,
+            mtime=st.st_mtime,
+        )
+
+@dataclass(frozen=True)
+class LongFormatLine:
+    mode: str
+    nlink: int
+    owner: str
+    group: str
+    size: int
+    mtime: str
+    name: str
+
+    def __str__(self) -> str:
+        return f"{self.mode} {self.nlink} {self.owner} {self.group} {self.size} {self.mtime} {self.name}"
+
+
+@dataclass(frozen=True)
 class FileEntry:
     path: Path
     name: str
     is_dir: bool
+    file_status: FileStatus
 
 
 @dataclass(frozen=True)

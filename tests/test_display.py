@@ -8,6 +8,8 @@ from pyls.display import (
     replace_nonprintable,
 )
 from pyls.types import FileEntry
+from tests.conftest import make_file_entry
+
 
 # c_escape tests
 
@@ -40,7 +42,7 @@ def test_format_entry_name_applies_q():
         escape = False
         indicator_style = False
 
-    e = FileEntry(Path("x"), "a\nb", False)
+    e = make_file_entry(Path("x"), "a\nb", False)
     assert format_entry_name(e, Opts()) == "a?b"
 
 
@@ -52,7 +54,7 @@ def test_format_entry_name_applies_Q():
         escape = False
         indicator_style = False
 
-    e = FileEntry(Path("x"), "abc", False)
+    e = make_file_entry(Path("x"), "abc", False)
     assert format_entry_name(e, Opts()) == '"abc"'
 
 
@@ -64,7 +66,7 @@ def test_format_entry_name_applies_q_then_Q():
         escape = False
         indicator_style = False
 
-    e = FileEntry(Path("x"), "a\nb", False)
+    e = make_file_entry(Path("x"), "a\nb", False)
     assert format_entry_name(e, Opts()) == '"a?b"'
 
 
@@ -74,7 +76,7 @@ def test_N_disables_q_and_Q():
         hide_control_chars = True
         quote_name = True
 
-    e = FileEntry(Path("x"), "a\nb", False)
+    e = make_file_entry(Path("x"), "a\nb", False)
     assert format_entry_name(e, Opts()) == "a\nb"
 
 
@@ -84,7 +86,7 @@ def test_N_only_prints_literal():
         hide_control_chars = False
         quote_name = False
 
-    e = FileEntry(Path("x"), 'a"b', False)
+    e = make_file_entry(Path("x"), 'a"b', False)
     assert format_entry_name(e, Opts()) == 'a"b'
 
 
@@ -97,7 +99,7 @@ def test_b_wins_over_q():
         indicator_style = False
 
 
-    e = FileEntry(Path("x"), "a\nb", False)
+    e = make_file_entry(Path("x"), "a\nb", False)
     assert format_entry_name(e, Opts()) == "a\\nb"
 
 def test_N_disables_b():
@@ -107,7 +109,7 @@ def test_N_disables_b():
         hide_control_chars = False
         quote_name = False
 
-    e = FileEntry(Path("x"), "a\nb", False)
+    e = make_file_entry(Path("x"), "a\nb", False)
     assert format_entry_name(e, Opts()) == "a\nb"
 
 
@@ -119,8 +121,8 @@ def test_p_appends_slash_only_for_directories():
         quote_name = False
         indicator_style = True
 
-    d = FileEntry(Path("dir"), "dir", True)
-    f = FileEntry(Path("file"), "file", False)
+    d = make_file_entry(Path("dir"), "dir", True)
+    f = make_file_entry(Path("file"), "file", False)
 
     assert format_entry_name(d, Opts()) == "dir/"
     assert format_entry_name(f, Opts()) == "file"
@@ -138,8 +140,8 @@ def test_ignore_filters_matching_names():
         p = False
 
     entries = [
-        FileEntry(Path("a.py"), "a.py", False),
-        FileEntry(Path("b.txt"), "b.txt", False),
+        make_file_entry(Path("a.py")),
+        make_file_entry(Path("b.txt")),
     ]
     filtered = filter_ignored(entries, Opts())
     assert [e.name for e in filtered] == ["b.txt"]
