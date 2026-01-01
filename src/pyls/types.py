@@ -102,6 +102,12 @@ class FileEntry:
     file_status: FileStatus
 
 
+@dataclass
+class DirEntries:
+    path: Path
+    entries: list[FileEntry]
+
+
 @dataclass(frozen=True)
 class ScanPathsResult:
     entries: list[FileEntry]

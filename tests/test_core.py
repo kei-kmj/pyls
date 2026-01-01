@@ -89,16 +89,16 @@ def test_should_include(all_flag, almost_all_flag, name, expected):
 
 def test_scan_dir_children_succeeds_for_existing_dir(sample_000000_dir):
     entries = []
-    status = scan_dir_children(sample_000000_dir, Opts(), entries=entries)
+    dir_entries, status = scan_dir_children(sample_000000_dir, Opts(), entries=entries)
 
     assert status == 0
-    assert len(entries) == 12
+    assert len(dir_entries.entries) == 12
 
 
 def test_scan_dir_children_fails_for_nonexistent_dir():
     non_existent_dir = Path("/path/to/nonexistent/dir")
     entries = []
-    status = scan_dir_children(non_existent_dir, Opts(), entries=entries)
+    dir_entries, status = scan_dir_children(non_existent_dir, Opts(), entries=entries)
 
     assert status == 1
 
@@ -110,7 +110,7 @@ def test_scan_dir_children_fails_for_permission_error(sample_000000_dir, monkeyp
     monkeypatch.setattr(Path, "iterdir", _raise_permission_error)
 
     entries = []
-    status = scan_dir_children(sample_000000_dir, Opts(), entries)
+    dir_entries, status = scan_dir_children(sample_000000_dir, Opts(), entries)
 
     assert status == 1
     out = capsys.readouterr().out
@@ -137,25 +137,24 @@ def test_extract_dirs_from_files_does_nothing_when_directory_opt_is_true():
 def test_collect_entries_bfs_returns_scan_paths_result_for_existing_dir(sample_000000_dir):
     result = collect_entries_bfs([sample_000000_dir], Opts())
 
-    assert result.exit_status == 0
-    assert sample_000000_dir in result.dir_queue
+    assert len(result) == 1
 
 
-def test_collect_entries_bfs_returns_scan_paths_result_for_existing_file(sample_000000_dir):
-    p = sample_000000_dir / "file_0000.txt"
+def test_collect_entries_bfs_returns_dir_entries_for_existing_file(sample_000000_dir):
+    p = sample_000000_dir
 
     result = collect_entries_bfs([p], Opts())
 
-    assert result.exit_status == 0
-    assert result.dir_queue == []
-    assert {e.name for e in result.entries} == {"file_0000.txt"}
+    assert len(result) == 1
+    assert result[0].path == sample_000000_dir
+    assert len(result[0].entries) == 12
 
 
 def test_move_dirs_to_pending_moves_dirs_and_keeps_files(sample_000000_dir):
-    entries = []
-    assert scan_dir_children(sample_000000_dir, Opts(), entries) == 0
+    dir_entries, status = scan_dir_children(sample_000000_dir, Opts(), entries=[])
 
     pending_dirs = []
+    entries = list(dir_entries.entries)
     move_dirs_to_pending(entries, pending_dirs, Opts())
     assert len(pending_dirs) == 2
     assert {p.name for p in pending_dirs} == {"dir_a", "dir_b"}
@@ -168,10 +167,10 @@ def test_move_dirs_to_pending_does_nothing_when_directory_opt_is_true(sample_000
         directory = True
         all = True
 
-    entries = []
-    assert scan_dir_children(sample_000000_dir, DirOpts(), entries) == 0
+    dir_entries, status = scan_dir_children(sample_000000_dir, DirOpts(), entries=[])
 
     pending_queue = []
+    entries = list(dir_entries.entries)
     move_dirs_to_pending(entries, pending_queue, DirOpts())
 
     assert pending_queue == []

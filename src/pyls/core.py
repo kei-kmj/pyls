@@ -10,7 +10,7 @@ from pyls.display import (
     iter_display_entries,
     max_width,
 )
-from pyls.types import ExitStatus, FileEntry, FileStatus, ScanPathsResult
+from pyls.types import DirEntries, ExitStatus, FileEntry, FileStatus
 
 
 def gobble_file(
@@ -51,15 +51,15 @@ def scan_dir_children(
     dir_path: Path,
     opts,
     entries: list[FileEntry],
-) -> ExitStatus:
+) -> tuple[DirEntries, ExitStatus]:
     try:
         children = list(dir_path.iterdir())
     except FileNotFoundError:
         print(f"pyls: cannot access '{dir_path}': No such file or directory")
-        return ExitStatus.ERROR
+        return DirEntries(path=dir_path, entries=[]), ExitStatus.ERROR
     except PermissionError:
         print(f"pyls: cannot access '{dir_path}': Permission denied")
-        return ExitStatus.ERROR
+        return DirEntries(path=dir_path, entries=[]), ExitStatus.ERROR
 
     if opts.all:
         dot_status = FileStatus.from_stat_result(dir_path.lstat())
@@ -72,7 +72,7 @@ def scan_dir_children(
         if not should_include(child.name, opts):
             continue
         exit_status |= int(gobble_file(child, opts, entries))
-    return ExitStatus(exit_status)
+    return DirEntries(path=dir_path, entries=entries), ExitStatus(exit_status)
 
 
 def extract_dirs_from_files(
@@ -95,28 +95,21 @@ def extract_dirs_from_files(
     cwd_entries.extend(files)
 
 
-def collect_entries_bfs(paths: list[Path], opts) -> ScanPathsResult:
-    entries: list[FileEntry] = []
-    dir_queue: list[Path] = []
-    exit_status = ExitStatus.OK
+def collect_entries_bfs(paths: list[Path], opts) -> list[DirEntries]:
+    result: list[DirEntries] = []
+    dir_queue: list[Path] = list(paths)
 
-    for p in paths:
-        exit_status |= gobble_file(p, opts, entries)
+    while dir_queue:
+        d = dir_queue.pop(0)
+        dir_entries, status = scan_dir_children(d, opts, entries=[])
+        result.append(dir_entries)
 
-    move_dirs_to_pending(entries, dir_queue, opts)
+        if opts.recursive:
+            for entry in dir_entries.entries:
+                if entry.is_dir and entry.name not in {".", ".."}:
+                    dir_queue.append(entry.path)
 
-    if not opts.recursive:
-        for d in list(dir_queue):
-            exit_status |= scan_dir_children(d, opts, entries)
-        return ScanPathsResult(entries=entries, dir_queue=dir_queue, exit_status=ExitStatus(exit_status))
-
-    i = 0
-    while i < len(dir_queue):
-        d = dir_queue[i]
-        i += 1
-        exit_status |= scan_dir_children(d, opts, entries)
-        move_dirs_to_pending(entries, dir_queue, opts)
-    return ScanPathsResult(entries, dir_queue, ExitStatus(exit_status))
+    return result
 
 
 def move_dirs_to_pending(
