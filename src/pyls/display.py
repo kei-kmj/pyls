@@ -196,7 +196,12 @@ def should_ignore(name: str, patterns: list[str]) -> bool:
 
 
 def filter_ignored(entries: Iterable[FileEntry], opts) -> list[FileEntry]:
-    patterns = opts.ignore
+    patterns = list(opts.ignore)
+
+    if not (opts.all or opts.almost_all):
+        if opts.hide:
+            patterns.append(opts.hide)
+
     if not patterns:
         return list(entries)
     return [e for e in entries if not should_ignore(e.name, patterns)]

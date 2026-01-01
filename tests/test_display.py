@@ -147,6 +147,9 @@ def test_ignore_filters_matching_names():
         hide_control_chars = False
         quote_name = False
         p = False
+        all = False
+        almost_all = False
+        hide = False
 
     entries = [
         make_file_entry(Path("a.py")),
@@ -154,6 +157,72 @@ def test_ignore_filters_matching_names():
     ]
     filtered = filter_ignored(entries, Opts())
     assert [e.name for e in filtered] == ["b.txt"]
+
+
+def test_hide_filters_matching_names():
+    class Opts:
+        ignore = []
+        unsorted = False
+        reverse = False
+        literal_name = True
+        escape = False
+        hide_control_chars = False
+        quote_name = False
+        p = False
+        all = False
+        almost_all = False
+        hide = "*.py"
+
+    entries = [
+        make_file_entry(Path("a.py")),
+        make_file_entry(Path("b.txt")),
+    ]
+    filtered = filter_ignored(entries, Opts())
+    assert [e.name for e in filtered] == ["b.txt"]
+
+
+def test_hide_disabled_by_all():
+    class Opts:
+        ignore = []
+        unsorted = False
+        reverse = False
+        literal_name = True
+        escape = False
+        hide_control_chars = False
+        quote_name = False
+        p = False
+        all = True
+        almost_all = False
+        hide = "*.py"
+
+    entries = [
+        make_file_entry(Path("a.py")),
+        make_file_entry(Path("b.txt")),
+    ]
+    filtered = filter_ignored(entries, Opts())
+    assert [e.name for e in filtered] == ["a.py", "b.txt"]
+
+
+def test_hide_disabled_by_almost_all():
+    class Opts:
+        ignore = []
+        unsorted = False
+        reverse = False
+        literal_name = True
+        escape = False
+        hide_control_chars = False
+        quote_name = False
+        p = False
+        all = False
+        almost_all = True
+        hide = "*.py"
+
+    entries = [
+        make_file_entry(Path("a.py")),
+        make_file_entry(Path("b.txt")),
+    ]
+    filtered = filter_ignored(entries, Opts())
+    assert [e.name for e in filtered] == ["a.py", "b.txt"]
 
 
 def test_format_entry_name_applies_q():
