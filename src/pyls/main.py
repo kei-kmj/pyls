@@ -50,10 +50,11 @@ def print_directory(d: Path, args, show_header: bool) -> list[Path]:
 
 
 def print_subdirs_recursively(subdirs: list[Path], args) -> None:
-    for sub_entry in collect_entries_bfs(subdirs, args):
+    entries_list = list(collect_entries_bfs(subdirs, args))
+    for i, sub_entry in enumerate(entries_list):
         print(f"{sub_entry.path}:")
         print_entries(sub_entry.entries, args)
-        print()
+        print("\n" if i + 1 < len(entries_list) else "")
 
 
 def main(argv: list[str] | None = None) -> None:
@@ -78,3 +79,4 @@ def main(argv: list[str] | None = None) -> None:
 
     if args.recursive:
         print_subdirs_recursively(all_subdirs, args)
+        # print("\n" if len(all_subdirs) + 1 < len(all_subdirs) else "", end="")

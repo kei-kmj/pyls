@@ -11,6 +11,7 @@ from pyls.display import (
     iter_display_entries,
     max_width,
 )
+from pyls.layout import get_terminal_width, print_columns
 from pyls.types import DirEntries, ExitStatus, FileEntry, FileStatus
 
 
@@ -157,7 +158,11 @@ def print_entries(entries: list[FileEntry], opts) -> None:
         for entry, line in zip(display_entries, raw_lines):
             print(format_line_with_widths(line, widths, opts, entry))
     else:
+        names = []
         for entry in display_entries:
             prefix = format_prefix(entry, opts)
+            names.append(prefix + format_entry_name(entry, opts))
 
-            print(prefix + format_entry_name(entry, opts))
+        terminal_width = get_terminal_width()
+        tab_size = opts.tabsize or 8
+        print_columns(names, terminal_width, tab_size)
