@@ -4,6 +4,7 @@ from datetime import datetime
 from pathlib import Path
 
 import pytest
+from freezegun import freeze_time
 
 from pyls.display import (
     c_escape,
@@ -14,7 +15,7 @@ from pyls.display import (
     format_entry_name,
     format_line_with_widths,
     format_long_line,
-    format_mtime,
+    format_time,
     group_name,
     human_readable_size,
     max_width,
@@ -25,7 +26,7 @@ from pyls.display import (
     user_name,
 )
 from pyls.types import LongFormatLine
-from tests.conftest import make_file_entry, make_file_status
+from tests.conftest import MockOpts, make_file_entry, make_file_status
 
 
 def test_filetype_char_directory():
@@ -84,21 +85,14 @@ def test_group_name_unknown_gid_falls_back_to_number():
     assert group_name(99999, numeric=False) == "99999"
 
 
-def test_format_mtime():
-    # 2024-12-29 15:17:00
+@freeze_time("2025-01-01 12:00:00")
+def test_format_time():
     epoch = datetime(2024, 12, 29, 15, 17, 0).timestamp()
-    assert format_mtime(epoch) == "Dec 29 15:17"
+    assert format_time(epoch) == "Dec 29 15:17"
 
 
 def test_format_long_line():
-    class Opts:
-        numeric_uid_gid = True
-        literal = True
-        escape = False
-        hide_control_chars = False
-        quote_name = False
-        human_readable = False
-        p = False
+    opts = MockOpts(numeric_uid_gid=True, literal=True)
 
     entry = make_file_entry(
         Path("test.txt"),
@@ -108,17 +102,17 @@ def test_format_long_line():
             uid=1000,
             gid=1000,
             size=256,
-            mtime=datetime(2024, 12, 29, 15, 17, 0).timestamp(),
+            mtime=datetime(2025, 12, 29, 15, 17, 0).timestamp(),
         ),
     )
-    line = format_long_line(entry, Opts())
+    line = format_long_line(entry, opts)
 
     assert line.mode == "-rw-r--r-- "
     assert line.nlink == 1
     assert line.owner == "1000"
     assert line.group == "1000"
     assert line.size == "256"
-    assert line.mtime == "Dec 29 15:17"
+    assert line.time == "Dec 29 15:17"
     assert line.name == "test.txt"
 
 
@@ -138,200 +132,98 @@ def test_quote_double_escapes_quote_and_backslash():
 
 
 def test_ignore_filters_matching_names():
-    class Opts:
-        ignore = ["*.py"]
-        unsorted = False
-        reverse = False
-        literal_name = True
-        escape = False
-        hide_control_chars = False
-        quote_name = False
-        p = False
-        all = False
-        almost_all = False
-        hide = False
+    opts = MockOpts(ignore=["*.py"])
 
     entries = [
         make_file_entry(Path("a.py")),
         make_file_entry(Path("b.txt")),
     ]
-    filtered = filter_ignored(entries, Opts())
+    filtered = filter_ignored(entries, opts)
     assert [e.name for e in filtered] == ["b.txt"]
 
 
 def test_hide_filters_matching_names():
-    class Opts:
-        ignore = []
-        unsorted = False
-        reverse = False
-        literal_name = True
-        escape = False
-        hide_control_chars = False
-        quote_name = False
-        p = False
-        all = False
-        almost_all = False
-        hide = "*.py"
+    opts = MockOpts(hide="*.py")
 
     entries = [
         make_file_entry(Path("a.py")),
         make_file_entry(Path("b.txt")),
     ]
-    filtered = filter_ignored(entries, Opts())
+    filtered = filter_ignored(entries, opts)
     assert [e.name for e in filtered] == ["b.txt"]
 
 
 def test_hide_disabled_by_all():
-    class Opts:
-        ignore = []
-        unsorted = False
-        reverse = False
-        literal_name = True
-        escape = False
-        hide_control_chars = False
-        quote_name = False
-        p = False
-        all = True
-        almost_all = False
-        hide = "*.py"
+    opts = MockOpts(hide="*.py", all=True)
 
     entries = [
         make_file_entry(Path("a.py")),
         make_file_entry(Path("b.txt")),
     ]
-    filtered = filter_ignored(entries, Opts())
+    filtered = filter_ignored(entries, opts)
     assert [e.name for e in filtered] == ["a.py", "b.txt"]
 
 
 def test_hide_disabled_by_almost_all():
-    class Opts:
-        ignore = []
-        unsorted = False
-        reverse = False
-        literal_name = True
-        escape = False
-        hide_control_chars = False
-        quote_name = False
-        p = False
-        all = False
-        almost_all = True
-        hide = "*.py"
+    opts = MockOpts(hide="*.py", almost_all=True)
 
     entries = [
         make_file_entry(Path("a.py")),
         make_file_entry(Path("b.txt")),
     ]
-    filtered = filter_ignored(entries, Opts())
+    filtered = filter_ignored(entries, opts)
     assert [e.name for e in filtered] == ["a.py", "b.txt"]
 
 
 def test_format_entry_name_applies_q():
-    class Opts:
-        literal = False
-        hide_control_chars = True
-        quote_name = False
-        escape = False
-        indicator_style = False
-        classify = False
-        p = False
-        file_type = False
-
+    opts = MockOpts(hide_control_chars=True)
     e = make_file_entry(Path("x"), "a\nb", False)
-    assert format_entry_name(e, Opts()) == "a?b"
+    assert format_entry_name(e, opts) == "a?b"
 
 
 def test_format_entry_name_applies_Q():
-    class Opts:
-        literal = False
-        hide_control_chars = False
-        quote_name = True
-        escape = False
-        indicator_style = False
-        classify = False
-        p = False
-        file_type = False
-
+    opts = MockOpts(quote_name=True)
     e = make_file_entry(Path("x"), "abc", False)
-    assert format_entry_name(e, Opts()) == '"abc"'
+    assert format_entry_name(e, opts) == '"abc"'
 
 
 def test_format_entry_name_applies_q_then_Q():
-    class Opts:
-        literal = False
-        hide_control_chars = True
-        quote_name = True
-        escape = False
-        indicator_style = False
-        classify = False
-        p = False
-        file_type = False
-
+    opts = MockOpts(hide_control_chars=True, quote_name=True)
     e = make_file_entry(Path("x"), "a\nb", False)
-    assert format_entry_name(e, Opts()) == '"a?b"'
+    assert format_entry_name(e, opts) == '"a?b"'
 
 
 def test_N_disables_q_and_Q():
-    class Opts:
-        literal = True
-        hide_control_chars = True
-        quote_name = True
-
+    opts = MockOpts(literal=True, hide_control_chars=True, quote_name=True)
     e = make_file_entry(Path("x"), "a\nb", False)
-    assert format_entry_name(e, Opts()) == "a\nb"
+    assert format_entry_name(e, opts) == "a\nb"
 
 
 def test_N_only_prints_literal():
-    class Opts:
-        literal = True
-        hide_control_chars = False
-        quote_name = False
-
+    opts = MockOpts(literal=True)
     e = make_file_entry(Path("x"), 'a"b', False)
-    assert format_entry_name(e, Opts()) == 'a"b'
+    assert format_entry_name(e, opts) == 'a"b'
 
 
 def test_b_wins_over_q():
-    class Opts:
-        literal = False
-        escape = True
-        hide_control_chars = True
-        quote_name = False
-        indicator_style = False
-        classify = False
-        p = False
-        file_type = False
-
+    opts = MockOpts(escape=True, hide_control_chars=True)
     e = make_file_entry(Path("x"), "a\nb", False)
-    assert format_entry_name(e, Opts()) == "a\\nb"
+    assert format_entry_name(e, opts) == "a\\nb"
 
 
 def test_N_disables_b():
-    class Opts:
-        literal = True
-        escape = True
-        hide_control_chars = False
-        quote_name = False
-
+    opts = MockOpts(literal=True, escape=True)
     e = make_file_entry(Path("x"), "a\nb", False)
-    assert format_entry_name(e, Opts()) == "a\nb"
+    assert format_entry_name(e, opts) == "a\nb"
 
 
 def test_p_appends_slash_only_for_directories():
-    class Opts:
-        literal = False
-        escape = False
-        hide_control_chars = False
-        quote_name = False
-        indicator_style = True
-        classify = False
-        p = False
-        file_type = True
-
+    opts = MockOpts(indicator_style=True, file_type=True)
     d = make_file_entry(Path("dir"), "dir", True)
     f = make_file_entry(Path("file"), "file", False)
 
-    assert format_entry_name(d, Opts()) == "dir/"
-    assert format_entry_name(f, Opts()) == "file"
+    assert format_entry_name(d, opts) == "dir/"
+    assert format_entry_name(f, opts) == "file"
 
 
 def test_human_readable_size_bytes():
@@ -355,32 +247,23 @@ def test_pad_value_left():
 
 
 def test_format_line_with_widths(sample_long_format_line, sample_widths):
-    class Opts:
-        no_owner = False
-        no_group = False
-
-    result = format_line_with_widths(sample_long_format_line, sample_widths, Opts())
+    opts = MockOpts()
+    result = format_line_with_widths(sample_long_format_line, sample_widths, opts)
     assert "keiko" in result
     assert "staff" in result
     assert "1024" in result
 
 
 def test_format_line_with_widths_no_owner(sample_long_format_line, sample_widths):
-    class Opts:
-        no_owner = True
-        no_group = False
-
-    result = format_line_with_widths(sample_long_format_line, sample_widths, Opts())
+    opts = MockOpts(no_owner=True)
+    result = format_line_with_widths(sample_long_format_line, sample_widths, opts)
     assert "keiko" not in result
     assert "staff" in result
 
 
 def test_format_line_with_widths_no_group(sample_long_format_line, sample_widths):
-    class Opts:
-        no_owner = False
-        no_group = True
-
-    result = format_line_with_widths(sample_long_format_line, sample_widths, Opts())
+    opts = MockOpts(no_group=True)
+    result = format_line_with_widths(sample_long_format_line, sample_widths, opts)
     assert "keiko" in result
     assert "staff" not in result
 
@@ -401,9 +284,9 @@ def test_calculate_total_blocks_empty():
 @pytest.mark.parametrize(
     "key,expected",
     [
-        (lambda x: x.nlink, 3),  # 1, 100, 10 → "100" で 3文字
-        (lambda x: x.owner, 14),  # "short", "longerusername", "medium" → 14文字
-        (lambda x: x.size, 4),  # "100", "1024", "50" → 4文字
+        (lambda x: x.nlink, 3),
+        (lambda x: x.owner, 14),
+        (lambda x: x.size, 4),
     ],
 )
 def test_max_width(key, expected):
@@ -414,7 +297,7 @@ def test_max_width(key, expected):
             owner="short",
             group="staff",
             size="100",
-            mtime="Dec 31 12:00",
+            time="Dec 31 12:00",
             name="a.txt",
         ),
         LongFormatLine(
@@ -423,7 +306,7 @@ def test_max_width(key, expected):
             owner="longerusername",
             group="staff",
             size="1024",
-            mtime="Dec 31 12:00",
+            time="Dec 31 12:00",
             name="b.txt",
         ),
         LongFormatLine(
@@ -432,7 +315,7 @@ def test_max_width(key, expected):
             owner="medium",
             group="staff",
             size="50",
-            mtime="Dec 31 12:00",
+            time="Dec 31 12:00",
             name="c.txt",
         ),
     ]
@@ -440,69 +323,107 @@ def test_max_width(key, expected):
 
 
 def test_file_type_indicator_directory_with_classify():
-    class Opts:
-        classify = True
-        file_type = False
-        p = False
-
+    opts = MockOpts(classify=True)
     entry = make_file_entry(Path("dir"), is_dir=True)
-    assert file_type_indicator(entry, Opts()) == "/"
+    assert file_type_indicator(entry, opts) == "/"
 
 
 def test_file_type_indicator_directory_with_p():
-    class Opts:
-        classify = False
-        file_type = False
-        p = True
-
+    opts = MockOpts(p=True)
     entry = make_file_entry(Path("dir"), is_dir=True)
-    assert file_type_indicator(entry, Opts()) == "/"
+    assert file_type_indicator(entry, opts) == "/"
 
 
 def test_file_type_indicator_file_with_classify():
-    class Opts:
-        classify = True
-        file_type = False
-        p = False
-
+    opts = MockOpts(classify=True)
     entry = make_file_entry(Path("file.txt"), is_dir=False)
-    assert file_type_indicator(entry, Opts()) == ""
+    assert file_type_indicator(entry, opts) == ""
 
 
 def test_file_type_indicator_no_options():
-    class Opts:
-        classify = False
-        file_type = False
-        p = False
-
+    opts = MockOpts()
     entry = make_file_entry(Path("dir"), is_dir=True)
-    assert file_type_indicator(entry, Opts()) == ""
+    assert file_type_indicator(entry, opts) == ""
 
 
 def test_file_type_indicator_executable_with_classify():
-    class Opts:
-        classify = True
-        file_type = False
-        p = False
-
+    opts = MockOpts(classify=True)
     entry = make_file_entry(
         Path("script"),
         is_dir=False,
         file_status=make_file_status(mode=stat.S_IFREG | 0o755),
     )
-    assert file_type_indicator(entry, Opts()) == "*"
+    assert file_type_indicator(entry, opts) == "*"
 
 
 def test_file_type_indicator_executable_with_file_type():
-    class Opts:
-        classify = False
-        file_type = True
-        p = False
-
+    opts = MockOpts(file_type=True)
     entry = make_file_entry(
         Path("script"),
         is_dir=False,
         file_status=make_file_status(mode=stat.S_IFREG | 0o755),
     )
+    assert file_type_indicator(entry, opts) == ""
 
-    assert file_type_indicator(entry, Opts()) == ""
+
+@freeze_time("2025-01-01 12:00:00")
+def test_format_long_line_with_atime():
+    opts = MockOpts(numeric_uid_gid=True, literal=True, time="atime")
+    entry = make_file_entry(
+        Path("test.txt"),
+        file_status=make_file_status(
+            mtime=datetime(2024, 12, 1, 10, 0, 0).timestamp(),
+            atime=datetime(2024, 12, 15, 15, 30, 0).timestamp(),
+            ctime=datetime(2024, 12, 10, 12, 0, 0).timestamp(),
+        ),
+    )
+    line = format_long_line(entry, opts)
+    assert line.time == "Dec 15 15:30"
+
+
+@freeze_time("2025-01-01 12:00:00")
+def test_format_long_line_with_ctime():
+    opts = MockOpts(numeric_uid_gid=True, literal=True, time="ctime")
+    entry = make_file_entry(
+        Path("test.txt"),
+        file_status=make_file_status(
+            mtime=datetime(2024, 12, 1, 10, 0, 0).timestamp(),
+            atime=datetime(2024, 12, 15, 15, 30, 0).timestamp(),
+            ctime=datetime(2024, 12, 10, 12, 0, 0).timestamp(),
+        ),
+    )
+    line = format_long_line(entry, opts)
+    assert line.time == "Dec 10 12:00"
+
+
+@freeze_time("2025-01-01 12:00:00")
+def test_format_long_line_with_default_time():
+    opts = MockOpts(numeric_uid_gid=True, literal=True, time=None)
+    entry = make_file_entry(
+        Path("test.txt"),
+        file_status=make_file_status(
+            mtime=datetime(2024, 12, 1, 10, 0, 0).timestamp(),
+            atime=datetime(2024, 12, 15, 15, 30, 0).timestamp(),
+            ctime=datetime(2024, 12, 10, 12, 0, 0).timestamp(),
+        ),
+    )
+    line = format_long_line(entry, opts)
+    assert line.time == "Dec 01 10:00"
+
+
+@freeze_time("2025-01-01 12:00:00")
+def test_format_time_within_six_months():
+    timestamp = datetime(2024, 10, 15, 14, 30, 0).timestamp()
+    assert format_time(timestamp) == "Oct 15 14:30"
+
+
+@freeze_time("2025-01-01 12:00:00")
+def test_format_time_older_than_six_months():
+    timestamp = datetime(2024, 3, 15, 10, 0, 0).timestamp()
+    assert format_time(timestamp) == "Mar 15  2024"
+
+
+@freeze_time("2025-01-01 12:00:00")
+def test_format_time_future():
+    timestamp = datetime(2025, 6, 15, 10, 0, 0).timestamp()
+    assert format_time(timestamp) == "Jun 15  2025"

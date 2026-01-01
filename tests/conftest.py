@@ -1,8 +1,46 @@
+from dataclasses import dataclass, field
 from pathlib import Path
 
 import pytest
 
 from pyls.types import FileEntry, FileStatus, LongFormatLine
+
+
+@dataclass
+class MockOpts:
+    """テスト用の共通オプションクラス"""
+
+    # 表示オプション
+    literal: bool = False
+    escape: bool = False
+    hide_control_chars: bool = False
+    quote_name: bool = False
+
+    # ファイル表示オプション
+    numeric_uid_gid: bool = False
+    human_readable: bool = False
+    no_owner: bool = False
+    no_group: bool = False
+
+    # インジケータオプション
+    indicator_style: bool = False
+    classify: bool = False
+    file_type: bool = False
+    p: bool = False
+
+    # フィルタオプション
+    ignore: list[str] = field(default_factory=list)
+    hide: str | bool = False
+    all: bool = False
+    almost_all: bool = False
+
+    # ソートオプション
+    unsorted: bool = False
+    reverse: bool = False
+    literal_name: bool = True
+
+    # 時間オプション
+    time: str | None = "mtime"
 
 
 @pytest.fixture(scope="session")
@@ -22,9 +60,13 @@ def make_file_status(
     gid: int = 1000,
     size: int = 0,
     mtime: float = 0.0,
+    atime: float = 0.0,
+    ctime: float = 0.0,
     blocks: int = 512,
 ) -> FileStatus:
-    return FileStatus(mode=mode, nlink=nlink, uid=uid, gid=gid, size=size, mtime=mtime, blocks=blocks)
+    return FileStatus(
+        mode=mode, nlink=nlink, uid=uid, gid=gid, size=size, mtime=mtime, atime=atime, ctime=ctime, blocks=blocks
+    )
 
 
 def make_file_entry(
@@ -49,7 +91,7 @@ def sample_long_format_line() -> LongFormatLine:
         owner="keiko",
         group="staff",
         size="1024",
-        mtime="Dec 31 12:00",
+        time="Dec 31 12:00",
         name="test.txt",
     )
 

@@ -10,7 +10,6 @@ from pyls.core import FileEntry, collect_entries_bfs, gobble_file, print_entries
 
 def print_args(args: argparse.Namespace) -> None:
     fields = [  # noqa: F841
-        "hide",
         "inode",
         "sort",
         "sort_size",

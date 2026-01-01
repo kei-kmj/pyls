@@ -3,7 +3,7 @@ import grp
 import pwd
 import stat
 from collections.abc import Iterable
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 
 import xattr
@@ -81,7 +81,7 @@ def format_line_with_widths(line: LongFormatLine, widths: dict[str, int], opts) 
 
     extra_space = "  " if (opts.no_owner and opts.no_group) else " "
     parts.append(extra_space + pad_value(line.size, widths["size"]))
-    parts.append(line.mtime)
+    parts.append(line.time)
     parts.append(line.name)
 
     return " ".join(parts)
@@ -113,9 +113,17 @@ def group_name(gid: int, numeric: bool) -> str:
         return str(gid)
 
 
-def format_mtime(epoch: float) -> str:
-    dt = datetime.fromtimestamp(epoch)
-    return dt.strftime(Format.MTIME)
+def format_time(timestamp: float) -> str:
+    file_datetime = datetime.fromtimestamp(timestamp)
+    now = datetime.now()
+    six_months_ago = now - timedelta(days=180)
+
+    if file_datetime < six_months_ago or file_datetime > now:
+        return file_datetime.strftime(Format.DAY_WITH_YEAR)
+    else:
+        return file_datetime.strftime(Format.DAY_WITH_TIME)
+
+
 
 
 def human_readable_size(size: int) -> str:
@@ -138,13 +146,21 @@ def format_long_line(entry: FileEntry, opts) -> LongFormatLine:
     else:
         size = str(status.size)
 
+    time_value = opts.time
+    if time_value == "atime" or time_value == "access":
+        display_time = status.atime
+    elif time_value == "ctime" or time_value == "status":
+        display_time = status.ctime
+    else:
+        display_time = status.mtime
+
     return LongFormatLine(
         mode=mode_string(status.mode) + extended_attribute_char(entry.path),
         nlink=status.nlink,
         owner=user_name(status.uid, numeric=opts.numeric_uid_gid),
         group=group_name(status.gid, numeric=opts.numeric_uid_gid),
         size=size,
-        mtime=format_mtime(status.mtime),
+        time=format_time(display_time),
         name=format_entry_name(entry, opts),
     )
 

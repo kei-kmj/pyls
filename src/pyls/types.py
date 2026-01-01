@@ -51,7 +51,8 @@ class EscapeSeq:
 
 
 class Format:
-    MTIME = "%b %d %H:%M"
+    DAY_WITH_TIME = "%b %d %H:%M"
+    DAY_WITH_YEAR = "%b %d  %Y"
     QUOTE = '"'
     DIR_INDICATOR = "/"
     NONPRINTABLE = "?"
@@ -65,6 +66,8 @@ class FileStatus:
     gid: int
     size: int
     mtime: float
+    atime: float
+    ctime: float
     blocks: int
 
     @classmethod
@@ -76,6 +79,8 @@ class FileStatus:
             gid=st.st_gid,
             size=st.st_size,
             mtime=st.st_mtime,
+            atime=st.st_atime,
+            ctime=st.st_ctime,
             blocks=st.st_blocks,
         )
 
@@ -87,11 +92,11 @@ class LongFormatLine:
     owner: str
     group: str
     size: str
-    mtime: str
+    time: str
     name: str
 
     def __str__(self) -> str:
-        return f"{self.mode} {self.nlink} {self.owner}  {self.group} {self.size} {self.mtime} {self.name}"
+        return f"{self.mode} {self.nlink} {self.owner}  {self.group} {self.size} {self.time} {self.name}"
 
 
 @dataclass(frozen=True)
