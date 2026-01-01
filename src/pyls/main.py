@@ -14,7 +14,6 @@ def print_args(args: argparse.Namespace) -> None:
         "sort",
         "sort_size",
         "sort_time",
-        "time",
         "tabsize",
         "sort_version",
         "sort_extension",

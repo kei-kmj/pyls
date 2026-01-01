@@ -70,7 +70,17 @@ def pad_value(value, width: int, right: bool = True) -> str:
         return str(value).ljust(width)
 
 
-def format_line_with_widths(line: LongFormatLine, widths: dict[str, int], opts) -> str:
+def format_prefix(entry: FileEntry, opts) -> str:
+    prefix = ""
+    if opts.inode:
+        prefix += f"{entry.file_status.inode} "
+    if opts.size:
+        prefix += f"{entry.file_status.blocks:>3} "
+    return prefix
+
+
+def format_line_with_widths(line: LongFormatLine, widths: dict[str, int], opts, entry: FileEntry | None = None) -> str:
+    prefix = format_prefix(entry, opts) if entry else ""
     parts = [line.mode, pad_value(line.nlink, widths["nlink"])]
 
     if not opts.no_owner:
@@ -84,7 +94,7 @@ def format_line_with_widths(line: LongFormatLine, widths: dict[str, int], opts) 
     parts.append(line.time)
     parts.append(line.name)
 
-    return " ".join(parts)
+    return prefix + " ".join(parts)
 
 
 def extended_attribute_char(path: Path) -> str:
@@ -122,8 +132,6 @@ def format_time(timestamp: float) -> str:
         return file_datetime.strftime(Format.DAY_WITH_YEAR)
     else:
         return file_datetime.strftime(Format.DAY_WITH_TIME)
-
-
 
 
 def human_readable_size(size: int) -> str:

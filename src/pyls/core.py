@@ -7,6 +7,7 @@ from pyls.display import (
     format_entry_name,
     format_line_with_widths,
     format_long_line,
+    format_prefix,
     iter_display_entries,
     max_width,
 )
@@ -153,9 +154,10 @@ def print_entries(entries: list[FileEntry], opts) -> None:
         }
 
         # 2パス目：整形して出力
-        for line in raw_lines:
-            print(format_line_with_widths(line, widths, opts))
+        for entry, line in zip(display_entries, raw_lines):
+            print(format_line_with_widths(line, widths, opts, entry))
     else:
         for entry in display_entries:
-            prefix = str(entry.file_status.blocks) + " " if opts.size else ""
+            prefix = format_prefix(entry, opts)
+
             print(prefix + format_entry_name(entry, opts))

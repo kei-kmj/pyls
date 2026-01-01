@@ -69,6 +69,7 @@ class FileStatus:
     atime: float
     ctime: float
     blocks: int
+    inode: int
 
     @classmethod
     def from_stat_result(cls, st: os.stat_result) -> "FileStatus":
@@ -82,6 +83,7 @@ class FileStatus:
             atime=st.st_atime,
             ctime=st.st_ctime,
             blocks=st.st_blocks,
+            inode=st.st_ino,
         )
 
 

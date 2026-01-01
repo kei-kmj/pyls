@@ -63,9 +63,19 @@ def make_file_status(
     atime: float = 0.0,
     ctime: float = 0.0,
     blocks: int = 512,
+    inode: int = 0,
 ) -> FileStatus:
     return FileStatus(
-        mode=mode, nlink=nlink, uid=uid, gid=gid, size=size, mtime=mtime, atime=atime, ctime=ctime, blocks=blocks
+        mode=mode,
+        nlink=nlink,
+        uid=uid,
+        gid=gid,
+        size=size,
+        mtime=mtime,
+        atime=atime,
+        ctime=ctime,
+        blocks=blocks,
+        inode=inode,
     )
 
 
