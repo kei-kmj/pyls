@@ -163,6 +163,6 @@ def print_entries(entries: list[FileEntry], opts) -> None:
             prefix = format_prefix(entry, opts)
             names.append(prefix + format_entry_name(entry, opts))
 
-        terminal_width = get_terminal_width()
-        tab_size = opts.tabsize or 8
+        terminal_width = opts.width if opts.width else get_terminal_width()
+        tab_size = opts.tabsize if opts.tabsize else 8
         print_columns(names, terminal_width, tab_size)
