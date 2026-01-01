@@ -37,6 +37,7 @@ class MockOpts:
     # ソート
     unsorted: bool = False
     reverse: bool = False
+    sort: str | None = None
     sort_time: bool = False
     sort_size: bool = False
     sort_extension: bool = False
