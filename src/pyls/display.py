@@ -1,6 +1,7 @@
 import fnmatch
 import grp
 import pwd
+import re
 import stat
 from collections.abc import Iterable
 from datetime import datetime, timedelta
@@ -204,10 +205,37 @@ def replace_nonprintable(s: str) -> str:
     return "".join(ch if ch.isprintable() else "?" for ch in s)
 
 
+def natural_sort_key(name: str) -> list:
+    parts = re.split(r"(\d+)", name.lower())
+    return [int(p) if p.isdigit() else p for p in parts]
+
+
 def iter_display_entries(entries: list[FileEntry], opts) -> list[FileEntry]:
     if opts.unsorted:
         return list(entries)
-    return sorted(entries, key=lambda e: e.name, reverse=opts.reverse)
+
+    if opts.sort_time:
+        return sorted(entries, key=lambda e: e.file_status.mtime, reverse=not opts.reverse)
+
+    if opts.sort_size:
+        return sorted(entries, key=lambda e: e.file_status.size, reverse=not opts.reverse)
+
+    if opts.sort_extension:
+
+        def ext_key(e: FileEntry) -> tuple[str, str]:
+            name = e.name
+            if "." in name:
+                extension = name.rsplit(".", 1)[1].lower()
+            else:
+                extension = ""
+            return extension, name.lower()
+
+        return sorted(entries, key=ext_key, reverse=opts.reverse)
+
+    if opts.sort_version:
+        return sorted(entries, key=lambda e: natural_sort_key(e.name), reverse=opts.reverse)
+
+    return sorted(entries, key=lambda e: e.name.lower(), reverse=opts.reverse)
 
 
 def quote_double(s: str) -> str:

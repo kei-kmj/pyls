@@ -10,36 +10,40 @@ from pyls.types import FileEntry, FileStatus, LongFormatLine
 class MockOpts:
     """テスト用の共通オプションクラス"""
 
-    # 表示オプション
+    # 表示
     literal: bool = False
     escape: bool = False
     hide_control_chars: bool = False
     quote_name: bool = False
 
-    # ファイル表示オプション
+    # ファイル表示
     numeric_uid_gid: bool = False
     human_readable: bool = False
     no_owner: bool = False
     no_group: bool = False
 
-    # インジケータオプション
+    # インジケータ
     indicator_style: bool = False
     classify: bool = False
     file_type: bool = False
     p: bool = False
 
-    # フィルタオプション
+    # フィルタ
     ignore: list[str] = field(default_factory=list)
     hide: str | bool = False
     all: bool = False
     almost_all: bool = False
 
-    # ソートオプション
+    # ソート
     unsorted: bool = False
     reverse: bool = False
+    sort_time: bool = False
+    sort_size: bool = False
+    sort_extension: bool = False
+    sort_version: bool = False
     literal_name: bool = True
 
-    # 時間オプション
+    # 時間
     time: str | None = "mtime"
 
 
