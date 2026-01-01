@@ -6,13 +6,7 @@ from pathlib import Path
 
 from pyls.cli import build_parser
 from pyls.core import FileEntry, collect_entries_bfs, gobble_file, print_entries, scan_dir_children
-
-
-def print_args(args: argparse.Namespace) -> None:
-    fields = [  # noqa: F841
-        "tabsize",
-        "width",
-    ]
+from pyls.layout import print_newline_except_last
 
 
 def classify_paths(
@@ -35,7 +29,7 @@ def print_files(files: list[Path], args: argparse.Namespace) -> None:
     entries: list[FileEntry] = []
 
     for f in files:
-        gobble_file(f, args, entries)
+        gobble_file(f, entries)
     print_entries(entries, args)
 
 
@@ -54,7 +48,7 @@ def print_subdirs_recursively(subdirs: list[Path], args) -> None:
     for i, sub_entry in enumerate(entries_list):
         print(f"{sub_entry.path}:")
         print_entries(sub_entry.entries, args)
-        print("\n" if i + 1 < len(entries_list) else "")
+        print_newline_except_last(i, len(entries_list))
 
 
 def main(argv: list[str] | None = None) -> None:
@@ -79,4 +73,3 @@ def main(argv: list[str] | None = None) -> None:
 
     if args.recursive:
         print_subdirs_recursively(all_subdirs, args)
-        # print("\n" if len(all_subdirs) + 1 < len(all_subdirs) else "", end="")

@@ -1,6 +1,10 @@
 import shutil
 
 
+def print_newline_except_last(index: int, total: int) -> None:
+    print("\n" if index + 1 < total else "", end="")
+
+
 def get_terminal_width() -> int:
     return shutil.get_terminal_size().columns
 
@@ -25,4 +29,4 @@ def print_columns(names: list[str], terminal_width: int, tab_size: int = 8) -> N
             idx = col * rows + row
             if idx < len(names):
                 print(names[idx].ljust(col_width), end="")
-        print("\n" if row + 1 < rows else "", end="")
+        print_newline_except_last(row, rows)

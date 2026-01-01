@@ -6,7 +6,6 @@ from pyls.core import (
     collect_entries_bfs,
     extract_dirs_from_files,
     gobble_file,
-    move_dirs_to_pending,
     scan_dir_children,
     should_include,
 )
@@ -27,7 +26,7 @@ def test_gobble_file_file_not_found(capsys):
     class Opts:
         pass
 
-    result = gobble_file(Path("/nonexistent/path/to/file"), Opts(), cwd_entries)
+    result = gobble_file(Path("/nonexistent/path/to/file"), cwd_entries)
 
     assert result == ExitStatus.ERROR
     assert cwd_entries == []
@@ -47,7 +46,7 @@ def test_gobble_file_permission_denied(capsys, tmp_path):
         pass
 
     try:
-        result = gobble_file(restricted / "file", Opts(), cwd_entries)
+        result = gobble_file(restricted / "file", cwd_entries)
         assert result == ExitStatus.ERROR
         captured = capsys.readouterr()
         assert "Permission denied" in captured.out
@@ -148,33 +147,6 @@ def test_collect_entries_bfs_returns_dir_entries_for_existing_file(sample_000000
     assert len(result) == 1
     assert result[0].path == sample_000000_dir
     assert len(result[0].entries) == 12
-
-
-def test_move_dirs_to_pending_moves_dirs_and_keeps_files(sample_000000_dir):
-    dir_entries, status = scan_dir_children(sample_000000_dir, Opts(), entries=[])
-
-    pending_dirs = []
-    entries = list(dir_entries.entries)
-    move_dirs_to_pending(entries, pending_dirs, Opts())
-    assert len(pending_dirs) == 2
-    assert {p.name for p in pending_dirs} == {"dir_a", "dir_b"}
-    assert all(not e.is_dir for e in entries)
-    assert len(entries) == 10
-
-
-def test_move_dirs_to_pending_does_nothing_when_directory_opt_is_true(sample_000000_dir):
-    class DirOpts:
-        directory = True
-        all = True
-
-    dir_entries, status = scan_dir_children(sample_000000_dir, DirOpts(), entries=[])
-
-    pending_queue = []
-    entries = list(dir_entries.entries)
-    move_dirs_to_pending(entries, pending_queue, DirOpts())
-
-    assert pending_queue == []
-    assert {e.name for e in entries} >= {"dir_a", "dir_b"}
 
 
 def test_extract_dirs_from_files():

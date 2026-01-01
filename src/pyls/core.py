@@ -11,13 +11,12 @@ from pyls.display import (
     iter_display_entries,
     max_width,
 )
-from pyls.layout import get_terminal_width, print_columns
+from pyls.layout import get_terminal_width, print_columns, print_newline_except_last
 from pyls.types import DirEntries, ExitStatus, FileEntry, FileStatus
 
 
 def gobble_file(
     path: Path,
-    opts,
     cwd_entries: list[FileEntry],
 ) -> ExitStatus:
     try:
@@ -73,7 +72,7 @@ def scan_dir_children(
     for child in children:
         if not should_include(child.name, opts):
             continue
-        exit_status |= int(gobble_file(child, opts, entries))
+        exit_status |= int(gobble_file(child, entries))
     return DirEntries(path=dir_path, entries=entries), ExitStatus(exit_status)
 
 
@@ -114,27 +113,6 @@ def collect_entries_bfs(paths: list[Path], opts) -> list[DirEntries]:
     return result
 
 
-def move_dirs_to_pending(
-    entries: list[FileEntry],
-    pending_queue: list[Path],
-    opts,
-) -> None:
-    if opts.directory:
-        return
-
-    files: list[FileEntry] = []
-
-    for entry in entries:
-        if entry.is_dir:
-            # TODO: 重複排除
-            pending_queue.append(entry.path)
-        else:
-            files.append(entry)
-
-    entries.clear()
-    entries.extend(files)
-
-
 def print_entries(entries: list[FileEntry], opts) -> None:
     filtered_entries = filter_ignored(entries, opts)
     display_entries = list(iter_display_entries(filtered_entries, opts))
@@ -163,6 +141,11 @@ def print_entries(entries: list[FileEntry], opts) -> None:
             prefix = format_prefix(entry, opts)
             names.append(prefix + format_entry_name(entry, opts))
 
-        terminal_width = opts.width if opts.width else get_terminal_width()
-        tab_size = opts.tabsize if opts.tabsize else 8
-        print_columns(names, terminal_width, tab_size)
+        if opts.one_column:
+            for i, name in enumerate(names):
+                print(name, end="")
+                print_newline_except_last(i, len(names))
+        else:
+            terminal_width = opts.width if opts.width else get_terminal_width()
+            tab_size = opts.tabsize if opts.tabsize else 8
+            print_columns(names, terminal_width, tab_size)
