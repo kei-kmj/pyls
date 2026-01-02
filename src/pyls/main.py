@@ -5,7 +5,7 @@ import sys
 from pathlib import Path
 
 from pyls.cli import build_parser
-from pyls.core import FileEntry, collect_entries_bfs, gobble_file, print_entries, scan_dir_children
+from pyls.core import FileEntry, collect_entries, gobble_file, print_entries, scan_dir_children
 from pyls.layout import print_newline_except_last
 
 
@@ -44,7 +44,7 @@ def print_directory(d: Path, args, show_header: bool) -> list[Path]:
 
 
 def print_subdirs_recursively(subdirs: list[Path], args) -> None:
-    entries_list = list(collect_entries_bfs(subdirs, args))
+    entries_list = list(collect_entries(subdirs, args))
     for i, sub_entry in enumerate(entries_list):
         print(f"{sub_entry.path}:")
         print_entries(sub_entry.entries, args)
@@ -63,7 +63,6 @@ def main(argv: list[str] | None = None) -> None:
 
     if files:
         print_files(files, args)
-        print()
 
     all_subdirs: list[Path] = []
     for d in dirs:

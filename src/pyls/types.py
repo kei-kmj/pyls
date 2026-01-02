@@ -2,6 +2,7 @@ import os
 from dataclasses import dataclass
 from enum import IntEnum
 from pathlib import Path
+from typing import NamedTuple
 
 
 class ExitStatus(IntEnum):
@@ -120,3 +121,8 @@ class ScanPathsResult:
     entries: list[FileEntry]
     dir_queue: list[Path]
     exit_status: ExitStatus
+
+
+class DirectoryIdentifier(NamedTuple):
+    device: int
+    inode: int

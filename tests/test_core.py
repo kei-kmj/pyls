@@ -3,14 +3,13 @@ from pathlib import Path
 import pytest
 
 from pyls.core import (
-    collect_entries_bfs,
-    extract_dirs_from_files,
+    collect_entries,
     gobble_file,
     scan_dir_children,
     should_include,
 )
 from pyls.types import ExitStatus
-from tests.conftest import make_file_entry
+from tests.conftest import make_file_entry, MockOpts
 
 
 class Opts:
@@ -80,7 +79,7 @@ def test_gobble_file_permission_denied(capsys, tmp_path):
     ],
 )
 def test_should_include(all_flag, almost_all_flag, name, expected):
-    opts = Opts()
+    opts = MockOpts()
     opts.all = all_flag
     opts.almost_all = almost_all_flag
     assert should_include(name, opts) is expected
@@ -88,7 +87,8 @@ def test_should_include(all_flag, almost_all_flag, name, expected):
 
 def test_scan_dir_children_succeeds_for_existing_dir(sample_000000_dir):
     entries = []
-    dir_entries, status = scan_dir_children(sample_000000_dir, Opts(), entries=entries)
+    opts = MockOpts()
+    dir_entries, status = scan_dir_children(sample_000000_dir, opts, entries=entries)
 
     assert status == 0
     assert len(dir_entries.entries) == 12
@@ -96,92 +96,39 @@ def test_scan_dir_children_succeeds_for_existing_dir(sample_000000_dir):
 
 def test_scan_dir_children_fails_for_nonexistent_dir():
     non_existent_dir = Path("/path/to/nonexistent/dir")
+    opts = MockOpts()
     entries = []
-    dir_entries, status = scan_dir_children(non_existent_dir, Opts(), entries=entries)
+    dir_entries, status = scan_dir_children(non_existent_dir, opts, entries=entries)
 
     assert status == 1
 
 
-def test_scan_dir_children_fails_for_permission_error(sample_000000_dir, monkeypatch, capsys):
-    def _raise_permission_error(self):
-        raise PermissionError
+def test_scan_dir_children_fails_for_permission_error(sample_000000_dir, monkeypatch, capsys , mock_permission_error):
+    opts = MockOpts()
 
-    monkeypatch.setattr(Path, "iterdir", _raise_permission_error)
+    monkeypatch.setattr(Path, "iterdir", mock_permission_error)
 
     entries = []
-    dir_entries, status = scan_dir_children(sample_000000_dir, Opts(), entries)
+    dir_entries, status = scan_dir_children(sample_000000_dir, opts, entries)
 
     assert status == 1
     out = capsys.readouterr().out
     assert "pyls: cannot access" in out
 
 
-def test_extract_dirs_from_files_does_nothing_when_directory_opt_is_true():
-    class Opts:
-        directory = True
-
-    cwd_entries = [
-        make_file_entry(Path("dir1"), is_dir=True),
-        make_file_entry(Path("file.txt"), is_dir=False),
-    ]
-    pending_dirs = []
-
-    extract_dirs_from_files(cwd_entries, pending_dirs, Opts())
-
-    # 何も変わらない
-    assert len(cwd_entries) == 2
-    assert pending_dirs == []
-
-
 def test_collect_entries_bfs_returns_scan_paths_result_for_existing_dir(sample_000000_dir):
-    result = collect_entries_bfs([sample_000000_dir], Opts())
+    opts = MockOpts()
+    result = collect_entries([sample_000000_dir], opts)
 
     assert len(result) == 1
 
 
 def test_collect_entries_bfs_returns_dir_entries_for_existing_file(sample_000000_dir):
     p = sample_000000_dir
+    opts = MockOpts()
 
-    result = collect_entries_bfs([p], Opts())
+    result = collect_entries([p], opts)
 
     assert len(result) == 1
     assert result[0].path == sample_000000_dir
     assert len(result[0].entries) == 12
-
-
-def test_extract_dirs_from_files():
-    cwd_entries = [
-        make_file_entry(Path("dir1"), is_dir=True),
-        make_file_entry(Path("file1.txt"), is_dir=False),
-        make_file_entry(Path("dir2"), is_dir=True),
-        make_file_entry(Path("file2.txt"), is_dir=False),
-    ]
-    pending_dirs = []
-
-    class Opts:
-        directory = False
-
-    extract_dirs_from_files(cwd_entries, pending_dirs, Opts())
-
-    assert len(pending_dirs) == 2
-    assert Path("dir1") in pending_dirs
-    assert Path("dir2") in pending_dirs
-
-    assert len(cwd_entries) == 2
-    assert all(not e.is_dir for e in cwd_entries)
-
-
-def test_extract_dirs_from_files_with_directory_opt():
-    cwd_entries = [
-        make_file_entry(Path("dir1"), is_dir=True),
-        make_file_entry(Path("file1.txt"), is_dir=False),
-    ]
-    pending_dirs = []
-
-    class Opts:
-        directory = True
-
-    extract_dirs_from_files(cwd_entries, pending_dirs, Opts())
-
-    assert len(cwd_entries) == 2
-    assert len(pending_dirs) == 0

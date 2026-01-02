@@ -21,6 +21,7 @@ class MockOpts:
     human_readable: bool = False
     no_owner: bool = False
     no_group: bool = False
+    recursive: bool = False
 
     # インジケータ
     indicator_style: bool = False
@@ -114,3 +115,16 @@ def sample_long_format_line() -> LongFormatLine:
 @pytest.fixture
 def sample_widths() -> dict[str, int]:
     return {"nlink": 1, "owner": 5, "group": 5, "size": 4}
+
+
+@pytest.fixture
+def mock_permission_error(monkeypatch):
+    def _raise(self):
+        raise PermissionError
+    return _raise
+
+@pytest.fixture
+def mock_file_not_found_error(monkeypatch):
+    def _raise(self):
+        raise FileNotFoundError
+    return _raise

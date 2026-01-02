@@ -1,4 +1,5 @@
 import stat
+import sys
 from pathlib import Path
 
 from pyls.display import (
@@ -12,7 +13,7 @@ from pyls.display import (
     max_width,
 )
 from pyls.layout import get_terminal_width, print_columns, print_newline_except_last
-from pyls.types import DirEntries, ExitStatus, FileEntry, FileStatus
+from pyls.types import DirEntries, ExitStatus, FileEntry, FileStatus, DirectoryIdentifier
 
 
 def gobble_file(
@@ -73,42 +74,39 @@ def scan_dir_children(
         if not should_include(child.name, opts):
             continue
         exit_status |= int(gobble_file(child, entries))
-    return DirEntries(path=dir_path, entries=entries), ExitStatus(exit_status)
+
+    sorted_entries = iter_display_entries(entries, opts)
+    return DirEntries(path=dir_path, entries=sorted_entries), ExitStatus(exit_status)
 
 
-def extract_dirs_from_files(
-    cwd_entries: list[FileEntry],
-    pending_dirs: list[Path],
-    opts,
-) -> None:
-    if opts.directory:
-        return
-
-    files: list[FileEntry] = []
-
-    for entry in cwd_entries:
-        if entry.is_dir:
-            pending_dirs.append(entry.path)
-        else:
-            files.append(entry)
-
-    cwd_entries.clear()
-    cwd_entries.extend(files)
-
-
-def collect_entries_bfs(paths: list[Path], opts) -> list[DirEntries]:
+def collect_entries(paths: list[Path], opts) -> list[DirEntries]:
     result: list[DirEntries] = []
-    dir_queue: list[Path] = list(paths)
+    pending_dirs: list[Path] = list(paths)
+    visited_dirs: set[DirectoryIdentifier] = set()
 
-    while dir_queue:
-        d = dir_queue.pop(0)
+    while pending_dirs:
+        d = pending_dirs.pop(0)
+
+        try:
+            stat_info = d.stat()
+            dir_id = DirectoryIdentifier(stat_info.st_dev, stat_info.st_ino)
+            if dir_id in visited_dirs:
+                print(f"pyls: {d}: not listing already-listed directory", file=sys.stderr)
+                continue
+            visited_dirs.add(dir_id)
+        except OSError:
+            pass
+
         dir_entries, status = scan_dir_children(d, opts, entries=[])
         result.append(dir_entries)
 
         if opts.recursive:
-            for entry in dir_entries.entries:
-                if entry.is_dir and entry.name not in {".", ".."}:
-                    dir_queue.append(entry.path)
+            subdirs = [
+                entry.path
+                for entry in dir_entries.entries
+                if entry.is_dir and entry.name not in {".", ".."}
+            ]
+            pending_dirs = subdirs + pending_dirs  # DFS
 
     return result
 
@@ -149,3 +147,4 @@ def print_entries(entries: list[FileEntry], opts) -> None:
             terminal_width = opts.width if opts.width else get_terminal_width()
             tab_size = opts.tabsize if opts.tabsize else 8
             print_columns(names, terminal_width, tab_size)
+            print()
