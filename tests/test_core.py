@@ -9,7 +9,7 @@ from pyls.core import (
     should_include,
 )
 from pyls.types import ExitStatus
-from tests.conftest import make_file_entry, MockOpts
+from tests.conftest import MockOpts
 
 
 class Opts:
@@ -103,7 +103,7 @@ def test_scan_dir_children_fails_for_nonexistent_dir():
     assert status == 1
 
 
-def test_scan_dir_children_fails_for_permission_error(sample_000000_dir, monkeypatch, capsys , mock_permission_error):
+def test_scan_dir_children_fails_for_permission_error(sample_000000_dir, monkeypatch, capsys, mock_permission_error):
     opts = MockOpts()
 
     monkeypatch.setattr(Path, "iterdir", mock_permission_error)

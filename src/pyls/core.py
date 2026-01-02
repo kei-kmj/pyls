@@ -13,7 +13,7 @@ from pyls.display import (
     max_width,
 )
 from pyls.layout import get_terminal_width, print_columns, print_newline_except_last
-from pyls.types import DirEntries, ExitStatus, FileEntry, FileStatus, DirectoryIdentifier
+from pyls.types import DirectoryIdentifier, DirEntries, ExitStatus, FileEntry, FileStatus
 
 
 def gobble_file(
@@ -101,11 +101,7 @@ def collect_entries(paths: list[Path], opts) -> list[DirEntries]:
         result.append(dir_entries)
 
         if opts.recursive:
-            subdirs = [
-                entry.path
-                for entry in dir_entries.entries
-                if entry.is_dir and entry.name not in {".", ".."}
-            ]
+            subdirs = [entry.path for entry in dir_entries.entries if entry.is_dir and entry.name not in {".", ".."}]
             pending_dirs = subdirs + pending_dirs  # DFS
 
     return result

@@ -45,8 +45,13 @@ def print_directory(d: Path, args, show_header: bool) -> list[Path]:
 
 def print_subdirs_recursively(subdirs: list[Path], args) -> None:
     entries_list = list(collect_entries(subdirs, args))
+    start_with_dot = not args.paths or args.paths == ["."]
+
     for i, sub_entry in enumerate(entries_list):
-        print(f"{sub_entry.path}:")
+        path_str = str(sub_entry.path)
+        if start_with_dot:
+            path_str = "./" + path_str
+        print(f"{path_str}:")
         print_entries(sub_entry.entries, args)
         print_newline_except_last(i, len(entries_list))
 

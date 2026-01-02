@@ -121,10 +121,13 @@ def sample_widths() -> dict[str, int]:
 def mock_permission_error(monkeypatch):
     def _raise(self):
         raise PermissionError
+
     return _raise
+
 
 @pytest.fixture
 def mock_file_not_found_error(monkeypatch):
     def _raise(self):
         raise FileNotFoundError
+
     return _raise
