@@ -44,7 +44,7 @@ def print_entries(entries: list[FileEntry], opts) -> None:
                 print(name, end="")
                 print_newline_except_last(i, len(names))
         else:
-            terminal_width = opts.width if opts.width else get_terminal_width()
+            terminal_width = opts.width if opts.width else current_terminal_width()
             tab_size = opts.tabsize if opts.tabsize else 8
             print_columns(names, terminal_width, tab_size)
             print()
@@ -86,7 +86,7 @@ def print_newline_except_last(index: int, total: int) -> None:
     print("\n" if index + 1 < total else "", end="")
 
 
-def get_terminal_width() -> int:
+def current_terminal_width() -> int:
     return shutil.get_terminal_size().columns
 
 
