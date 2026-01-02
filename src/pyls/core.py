@@ -2,17 +2,7 @@ import stat
 import sys
 from pathlib import Path
 
-from pyls.display import (
-    calculate_total_blocks,
-    filter_ignored,
-    format_entry_name,
-    format_line_with_widths,
-    format_long_line,
-    format_prefix,
-    iter_display_entries,
-    max_width,
-)
-from pyls.layout import get_terminal_width, print_columns, print_newline_except_last
+from pyls.filter import iter_display_entries
 from pyls.types import DirectoryIdentifier, DirEntries, ExitStatus, FileEntry, FileStatus
 
 
@@ -37,6 +27,22 @@ def gobble_file(
     entry = FileEntry(path=path, name=name, is_dir=is_dir, file_status=file_status)
     cwd_entries.append(entry)
     return ExitStatus.OK
+
+
+def classify_paths(
+    paths: list[str],
+) -> tuple[list[Path], list[Path]]:
+    files: list[Path] = []
+    dirs: list[Path] = []
+
+    for p in paths:
+        path = Path(p)
+        if path.is_dir():
+            dirs.append(path)
+        else:
+            files.append(path)
+
+    return files, dirs
 
 
 def should_include(name: str, opts) -> bool:
@@ -105,42 +111,3 @@ def collect_entries(paths: list[Path], opts) -> list[DirEntries]:
             pending_dirs = subdirs + pending_dirs  # DFS
 
     return result
-
-
-def print_entries(entries: list[FileEntry], opts) -> None:
-    filtered_entries = filter_ignored(entries, opts)
-    display_entries = list(iter_display_entries(filtered_entries, opts))
-
-    if opts.long or opts.size:
-        print(f"total {calculate_total_blocks(display_entries)}")
-
-    if opts.long:
-        # 1パス目：生データ収集
-        raw_lines = [format_long_line(entry, opts) for entry in display_entries]
-
-        # 幅計算
-        widths = {
-            "nlink": max_width(raw_lines, lambda x: x.nlink),
-            "owner": max_width(raw_lines, lambda x: x.owner),
-            "group": max_width(raw_lines, lambda x: x.group),
-            "size": max_width(raw_lines, lambda x: x.size),
-        }
-
-        # 2パス目：整形して出力
-        for entry, line in zip(display_entries, raw_lines):
-            print(format_line_with_widths(line, widths, opts, entry))
-    else:
-        names = []
-        for entry in display_entries:
-            prefix = format_prefix(entry, opts)
-            names.append(prefix + format_entry_name(entry, opts))
-
-        if opts.one_column:
-            for i, name in enumerate(names):
-                print(name, end="")
-                print_newline_except_last(i, len(names))
-        else:
-            terminal_width = opts.width if opts.width else get_terminal_width()
-            tab_size = opts.tabsize if opts.tabsize else 8
-            print_columns(names, terminal_width, tab_size)
-            print()

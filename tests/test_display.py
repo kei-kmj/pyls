@@ -6,25 +6,15 @@ from pathlib import Path
 import pytest
 from freezegun import freeze_time
 
-from pyls.display import (
-    c_escape,
+from pyls.filter import filter_ignored, iter_display_entries
+from pyls.format import filetype_char, permission_string, user_name, group_name, format_time, c_escape, \
+    replace_nonprintable, quote_double, human_readable_size, pad_value, file_type_indicator
+from pyls.output import (
     calculate_total_blocks,
-    file_type_indicator,
-    filetype_char,
-    filter_ignored,
     format_entry_name,
     format_line_with_widths,
     format_long_line,
-    format_time,
-    group_name,
-    human_readable_size,
-    iter_display_entries,
-    max_width,
-    pad_value,
-    permission_string,
-    quote_double,
-    replace_nonprintable,
-    user_name,
+    max_width
 )
 from pyls.types import LongFormatLine
 from tests.conftest import MockOpts, make_file_entry, make_file_status
