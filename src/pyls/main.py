@@ -14,8 +14,9 @@ def main(argv: list[str] | None = None) -> None:
         argv = sys.argv[1:]
 
     args = build_parser().parse_args(argv)
+    args.colorize = sys.stdout.isatty()
     paths = args.paths if args.paths else ["."]
-    files, dirs = classify_paths(paths)
+    files, dirs = classify_paths(paths, args)
 
     show_header = len(dirs) >= 1 and len(paths) > 1
 
@@ -26,7 +27,6 @@ def main(argv: list[str] | None = None) -> None:
     for d in dirs:
         subdirs = print_directory(d, args, show_header)
         all_subdirs.extend(subdirs)
-        print()
 
     if args.recursive:
         print_subdirs_recursively(all_subdirs, args)

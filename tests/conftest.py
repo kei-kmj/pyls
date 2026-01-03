@@ -15,6 +15,7 @@ class MockOpts:
     escape: bool = False
     hide_control_chars: bool = False
     quote_name: bool = False
+    directory: bool = False
 
     # ファイル表示
     numeric_uid_gid: bool = False
@@ -47,6 +48,9 @@ class MockOpts:
 
     # 時間
     time: str | None = "mtime"
+
+    # カラー
+    colorize: bool = False
 
 
 @pytest.fixture(scope="session")

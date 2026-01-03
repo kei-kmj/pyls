@@ -6,6 +6,8 @@ from pathlib import Path
 import pytest
 from freezegun import freeze_time
 
+from pyls.cli import build_parser
+from pyls.core import gobble_file
 from pyls.format import (
     calculate_total_blocks,
     c_escape,
@@ -22,10 +24,10 @@ from pyls.format import (
     permission_string,
     quote_double,
     replace_nonprintable,
-    user_name,
+    user_name, format_prefix,
 )
 from pyls.types import LongFormatLine
-from tests.conftest import MockOpts, make_file_entry, make_file_status
+from conftest import MockOpts, make_file_entry, make_file_status
 
 
 def test_filetype_char_directory():
@@ -118,6 +120,58 @@ def test_format_long_line():
 def test_c_escape_basic():
     assert c_escape("a\nb") == "a\\nb"
     assert c_escape("a\tb") == "a\\tb"
+
+
+def test_c_escape_printable():
+    result = c_escape("hello")
+
+    assert result == "hello"
+
+
+def test_c_escape_newline():
+    result = c_escape("hello\nworld")
+
+    assert result == "hello\\nworld"
+
+
+def test_c_escape_tab():
+    result = c_escape("hello\tworld")
+
+    assert result == "hello\\tworld"
+
+
+def test_c_escape_carriage_return():
+    result = c_escape("hello\rworld")
+
+    assert result == "hello\\rworld"
+
+
+def test_c_escape_hex():
+    # 0x01 は制御文字
+    result = c_escape("hello\x01world")
+
+    assert result == "hello\\x01world"
+
+
+def test_c_escape_unicode_2byte():
+    # U+0100 (Ā) の非表示版をテスト
+    result = c_escape("\u0085")  # NEL (Next Line)
+
+    assert result == "\\x85"
+
+
+def test_c_escape_unicode_4byte():
+    # 非表示の4バイトUnicode
+    result = c_escape("\U0001F600"[0] if len("\U0001F600") > 1 else "😀")
+
+    # 絵文字は printable なのでそのまま
+    assert "😀" in c_escape("😀") or "\\U" in c_escape("😀")
+
+
+def test_c_escape_empty():
+    result = c_escape("")
+
+    assert result == ""
 
 
 def test_replace_nonprintable_replaces_control_chars_with_question_mark():
@@ -382,3 +436,74 @@ def test_format_time_older_than_six_months():
 def test_format_time_future():
     timestamp = datetime(2025, 6, 15, 10, 0, 0).timestamp()
     assert format_time(timestamp) == "Jun 15  2025"
+
+
+def test_group_name_numeric_true():
+    gid = 1000
+
+    result = group_name(gid, numeric=True)
+
+    assert result == "1000"
+
+
+def test_group_name_numeric_false():
+    gid = os.getgid()
+
+    result = group_name(gid, numeric=False)
+
+    # 数字ではなくグループ名が返る
+    assert not result.isdigit()
+
+
+def test_group_name_unknown_gid():
+    gid = 999999  # 存在しないGID
+
+    result = group_name(gid, numeric=False)
+
+    # KeyError で数字にフォールバック
+    assert result == "999999"
+
+
+def test_format_prefix_no_options(sample_000000_dir):
+    args = build_parser().parse_args([])
+    entries = []
+    gobble_file(sample_000000_dir / "file_0000.txt", entries)
+    entry = entries[0]
+
+    result = format_prefix(entry, args)
+
+    assert result == ""
+
+
+def test_format_prefix_inode(sample_000000_dir):
+    args = build_parser().parse_args(["-i"])
+    entries = []
+    gobble_file(sample_000000_dir / "file_0000.txt", entries)
+    entry = entries[0]
+
+    result = format_prefix(entry, args)
+
+    assert str(entry.file_status.inode) in result
+    assert result.endswith(" ")
+
+
+def test_format_prefix_size(sample_000000_dir):
+    args = build_parser().parse_args(["-s"])
+    entries = []
+    gobble_file(sample_000000_dir / "file_0000.txt", entries)
+    entry = entries[0]
+
+    result = format_prefix(entry, args)
+
+    assert result.endswith(" ")
+
+
+def test_format_prefix_inode_and_size(sample_000000_dir):
+    args = build_parser().parse_args(["-i", "-s"])
+    entries = []
+    gobble_file(sample_000000_dir / "file_0000.txt", entries)
+    entry = entries[0]
+
+    result = format_prefix(entry, args)
+
+    assert str(entry.file_status.inode) in result

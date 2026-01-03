@@ -81,7 +81,6 @@ def print_subdirs_recursively(subdirs: list[Path], args) -> None:
         print_newline_except_last(i, len(entries_list))
 
 
-
 def print_newline_except_last(index: int, total: int) -> None:
     print("\n" if index + 1 < total else "", end="")
 
@@ -95,19 +94,37 @@ def print_columns(names: list[str], terminal_width: int, tab_size: int = 8) -> N
     if not names:
         return
 
-    max_len = max(len(name) for name in names)
-    col_width = ((max_len // tab_size) + 1) * tab_size
+    # 最大可能カラム数 (MIN_COLUMN_WIDTH = 3: 1文字 + 2スペース)
+    max_cols = min(len(names), max(1, terminal_width // 3))
 
-    # 収まる最大の列数を計算
-    columns = max(1, terminal_width // col_width)
+    # 各カラム数配置の情報を初期化
+    col_widths = {cols: [0] * cols for cols in range(1, max_cols + 1)}
+    valid = {cols: True for cols in range(1, max_cols + 1)}
 
-    # 行数を計算
-    rows = (len(names) + columns - 1) // columns
+    # 各ファイルを処理して、無効なカラム数を除外
+    for i, name in enumerate(names):
+        name_len = len(name)
+        for cols in range(1, max_cols + 1):
+            if not valid[cols]:
+                continue
+            rows = (len(names) + cols - 1) // cols
+            col = i // rows
+            col_widths[cols][col] = max(col_widths[cols][col], name_len + 2)
+            if sum(col_widths[cols]) - 2 > terminal_width:
+                valid[cols] = False
 
-    # 縦方向に表示
+    # 有効な最大カラム数を見つける
+    cols = max(c for c in range(1, max_cols + 1) if valid[c])
+    rows = (len(names) + cols - 1) // cols
+    widths = col_widths[cols]
+
+    # 表示
     for row in range(rows):
-        for col in range(columns):
+        for col in range(cols):
             idx = col * rows + row
             if idx < len(names):
-                print(names[idx].ljust(col_width), end="")
+                if col < cols - 1:
+                    print(names[idx].ljust(widths[col]), end="")
+                else:
+                    print(names[idx], end="")
         print_newline_except_last(row, rows)

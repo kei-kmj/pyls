@@ -13,6 +13,7 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("-a", "--all", action="store_true", help="do not ignore entries starting with .")
     p.add_argument("-A", "--almost-all", action="store_true", help="do not list implied . and ..")
     p.add_argument("-b", "--escape", action="store_true", help="print C-style escapes for nongraphic characters")
+    p.add_argument("--color", dest="colorize", action="store_true", default=False)
     p.add_argument("-d", "--directory", action="store_true", help="list directories themselves, not their contents")
     p.add_argument("--file-type", action="store_true", help="likewise, except do not append '*'")
     p.add_argument("-F", "--classify", action="store_true", help="append indicator (one of */=>@|) to entries")

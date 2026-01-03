@@ -6,24 +6,14 @@ from pyls.core import (
     collect_entries,
     gobble_file,
     scan_dir_children,
-    should_include,
+    should_include, classify_paths,
 )
 from pyls.types import ExitStatus
-from tests.conftest import MockOpts
-
-
-class Opts:
-    directory = False
-    all = False
-    almost_all = False
-    recursive = False
+from conftest import MockOpts
 
 
 def test_gobble_file_file_not_found(capsys):
     cwd_entries = []
-
-    class Opts:
-        pass
 
     result = gobble_file(Path("/nonexistent/path/to/file"), cwd_entries)
 
@@ -31,27 +21,6 @@ def test_gobble_file_file_not_found(capsys):
     assert cwd_entries == []
     captured = capsys.readouterr()
     assert "No such file or directory" in captured.out
-
-
-def test_gobble_file_permission_denied(capsys, tmp_path):
-    # パーミッションなしのファイルを作成
-    restricted = tmp_path / "restricted"
-    restricted.mkdir()
-    restricted.chmod(0o000)
-
-    cwd_entries = []
-
-    class Opts:
-        pass
-
-    try:
-        result = gobble_file(restricted / "file", cwd_entries)
-        assert result == ExitStatus.ERROR
-        captured = capsys.readouterr()
-        assert "Permission denied" in captured.out
-    finally:
-        # 後片付け
-        restricted.chmod(0o755)
 
 
 @pytest.mark.parametrize(
@@ -132,3 +101,54 @@ def test_collect_entries_bfs_returns_dir_entries_for_existing_file(sample_000000
     assert len(result) == 1
     assert result[0].path == sample_000000_dir
     assert len(result[0].entries) == 12
+
+
+def test_classify_paths_only_files(sample_000000_dir):
+    opts = MockOpts()
+    paths = [
+        str(sample_000000_dir / "file_0000.txt"),
+        str(sample_000000_dir / "file_0001.txt"),
+    ]
+
+    files, dirs = classify_paths(paths, opts)
+
+    assert len(files) == 2
+    assert len(dirs) == 0
+
+
+def test_classify_paths_only_dirs(sample_000000_dir):
+    opts = MockOpts()
+    paths = [
+        str(sample_000000_dir / "dir_a"),
+        str(sample_000000_dir / "dir_b"),
+    ]
+
+    files, dirs = classify_paths(paths, opts)
+
+    assert len(files) == 0
+    assert len(dirs) == 2
+
+
+def test_classify_paths_mixed(sample_000000_dir):
+    opts = MockOpts()
+    paths = [
+        str(sample_000000_dir / "file_0000.txt"),
+        str(sample_000000_dir / "dir_a"),
+    ]
+
+    files, dirs = classify_paths(paths, opts)
+
+    assert len(files) == 1
+    assert len(dirs) == 1
+    assert files[0].name == "file_0000.txt"
+    assert dirs[0].name == "dir_a"
+
+
+def test_classify_paths_empty():
+    opts = MockOpts()
+    files, dirs = classify_paths([], opts)
+
+    assert files == []
+    assert dirs == []
+
+

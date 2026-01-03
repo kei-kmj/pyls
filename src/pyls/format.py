@@ -64,7 +64,7 @@ def format_prefix(entry: FileEntry, opts) -> str:
     if opts.inode:
         prefix += f"{entry.file_status.inode} "
     if opts.size:
-        prefix += f"{entry.file_status.blocks:>3} "
+        prefix += f"{entry.file_status.blocks} "
     return prefix
 
 
@@ -221,6 +221,9 @@ def file_type_indicator(entry: FileEntry, opts) -> str:
 
     return ""
 
+BLUE = "\033[1;34m"
+RESET = "\033[0m"
+
 
 def format_entry_name(entry: FileEntry, opts) -> str:
     if opts.literal:
@@ -236,6 +239,9 @@ def format_entry_name(entry: FileEntry, opts) -> str:
 
     if opts.quote_name:
         name = quote_double(name)
+
+    if entry.is_dir and opts.colorize:
+        name = f"{BLUE}{name}{RESET}"
 
     name += file_type_indicator(entry, opts)
 

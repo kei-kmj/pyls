@@ -31,13 +31,17 @@ def gobble_file(
 
 def classify_paths(
     paths: list[str],
+    opts
 ) -> tuple[list[Path], list[Path]]:
     files: list[Path] = []
     dirs: list[Path] = []
 
     for p in paths:
         path = Path(p)
-        if path.is_dir():
+        if opts.directory:
+            if path.is_dir():
+                files.append(path)
+        elif path.is_dir():
             dirs.append(path)
         else:
             files.append(path)
