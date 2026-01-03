@@ -10,6 +10,7 @@ def run_ls(*args, cwd=None):
     )
     return result.stdout
 
+
 def run_pyls(*args, cwd=None):
     result = subprocess.run(
         ["uv", "run", "pyls", *args],
@@ -19,7 +20,6 @@ def run_pyls(*args, cwd=None):
     )
 
     return result.stdout
-
 
 
 def test_no_options():
@@ -84,8 +84,8 @@ def test_hide_option():
 
     assert pyls_out == ls_out
 
+
 def test_i_option():
-    ls_out = run_ls("-i", "test_fixture")
     pyls_out = run_pyls("-i", "test_fixture")
 
     expected = "5810 sample_00  5836 sample_01\n"
@@ -98,12 +98,13 @@ def test_I_option():
 
     assert pyls_out == ls_out
 
-def test_l_h_option():
-    ls_out = run_ls("-l","-h")
-    pyls_out = run_pyls("-l","-h")
 
-    ls_total = ls_out.strip().split('\n')[0]
-    pyls_total = pyls_out.strip().split('\n')[0]
+def test_l_h_option():
+    ls_out = run_ls("-l", "-h")
+    pyls_out = run_pyls("-l", "-h")
+
+    ls_total = ls_out.strip().split("\n")[0]
+    pyls_total = pyls_out.strip().split("\n")[0]
 
     assert pyls_total == ls_total
 
@@ -146,7 +147,9 @@ def test_l_option():
 def test_R_option():
     pyls_out = run_pyls("-R", "test_fixture/sample_00")
 
-    assert pyls_out == """test_fixture/sample_00:
+    assert (
+        pyls_out
+        == """test_fixture/sample_00:
 dir_a  file_0000.txt  file_0002.txt  file_0004.txt  file_0006.txt  file_0008.txt  
 dir_b  file_0001.txt  file_0003.txt  file_0005.txt  file_0007.txt  file_0009.txt  
 test_fixture/sample_00/dir_a:
@@ -156,6 +159,8 @@ test_fixture/sample_00/dir_b:
 b_0000.txt  b_0002.txt  b_0004.txt  b_0006.txt  
 b_0001.txt  b_0003.txt  b_0005.txt  b_0007.txt  
 """
+    )
+
 
 def test_s_option():
     ls_out = run_ls("-s", "test_fixture")

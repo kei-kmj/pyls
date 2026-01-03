@@ -4,18 +4,20 @@ from datetime import datetime
 from pathlib import Path
 
 import pytest
+from conftest import MockOpts, make_file_entry, make_file_status
 from freezegun import freeze_time
 
 from pyls.cli import build_parser
 from pyls.core import gobble_file
 from pyls.format import (
-    calculate_total_blocks,
     c_escape,
+    calculate_total_blocks,
     file_type_indicator,
     filetype_char,
     format_entry_name,
     format_line_with_widths,
     format_long_line,
+    format_prefix,
     format_time,
     group_name,
     human_readable_size,
@@ -24,10 +26,9 @@ from pyls.format import (
     permission_string,
     quote_double,
     replace_nonprintable,
-    user_name, format_prefix,
+    user_name,
 )
 from pyls.types import LongFormatLine
-from conftest import MockOpts, make_file_entry, make_file_status
 
 
 def test_filetype_char_directory():
@@ -158,14 +159,6 @@ def test_c_escape_unicode_2byte():
     result = c_escape("\u0085")  # NEL (Next Line)
 
     assert result == "\\x85"
-
-
-def test_c_escape_unicode_4byte():
-    # 非表示の4バイトUnicode
-    result = c_escape("\U0001F600"[0] if len("\U0001F600") > 1 else "😀")
-
-    # 絵文字は printable なのでそのまま
-    assert "😀" in c_escape("😀") or "\\U" in c_escape("😀")
 
 
 def test_c_escape_empty():

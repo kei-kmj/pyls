@@ -1,7 +1,13 @@
 from pyls.cli import build_parser
 from pyls.core import scan_dir_children
-from pyls.output import print_newline_except_last, print_directory, print_files, print_subdirs_recursively, \
-    print_columns, print_entries
+from pyls.output import (
+    print_columns,
+    print_directory,
+    print_entries,
+    print_files,
+    print_newline_except_last,
+    print_subdirs_recursively,
+)
 
 
 def test_print_entries_one_column(sample_00_dir, capsys):

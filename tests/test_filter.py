@@ -1,8 +1,8 @@
-
 from pathlib import Path
 
-from pyls.filter import filter_ignored, iter_display_entries
 from conftest import MockOpts, make_file_entry, make_file_status
+
+from pyls.filter import filter_ignored, iter_display_entries
 
 
 def test_ignore_filters_matching_names():

@@ -1,13 +1,22 @@
+import grp
 import pwd
 import stat
 from datetime import datetime, timedelta
 from pathlib import Path
 
-import grp
 import xattr
 
-from pyls.types import FileTypeChar, PermChar, LongFormatLine, FileEntry, XattrChar, Format, SizeUnit, EscapeSeq, \
-    IndicatorChar
+from pyls.types import (
+    EscapeSeq,
+    FileEntry,
+    FileTypeChar,
+    Format,
+    IndicatorChar,
+    LongFormatLine,
+    PermChar,
+    SizeUnit,
+    XattrChar,
+)
 
 
 def calculate_total_blocks(entries: list[FileEntry]) -> int:
@@ -220,6 +229,7 @@ def file_type_indicator(entry: FileEntry, opts) -> str:
 
     return ""
 
+
 BLUE = "\033[1;34m"
 RESET = "\033[0m"
 
@@ -245,4 +255,3 @@ def format_entry_name(entry: FileEntry, opts) -> str:
     name += file_type_indicator(entry, opts)
 
     return name
-

@@ -1,15 +1,16 @@
 from pathlib import Path
 
 import pytest
+from conftest import MockOpts
 
 from pyls.core import (
+    classify_paths,
     collect_entries,
     gobble_file,
     scan_dir_children,
-    should_include, classify_paths,
+    should_include,
 )
 from pyls.types import ExitStatus
-from conftest import MockOpts
 
 
 def test_gobble_file_file_not_found(capsys):
@@ -150,5 +151,3 @@ def test_classify_paths_empty():
 
     assert files == []
     assert dirs == []
-
-

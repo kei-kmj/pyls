@@ -29,10 +29,7 @@ def gobble_file(
     return ExitStatus.OK
 
 
-def classify_paths(
-    paths: list[str],
-    opts
-) -> tuple[list[Path], list[Path]]:
+def classify_paths(paths: list[str], opts) -> tuple[list[Path], list[Path]]:
     files: list[Path] = []
     dirs: list[Path] = []
 

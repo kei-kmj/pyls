@@ -1,15 +1,20 @@
 import argparse
 import shutil
-
 from pathlib import Path
 
-from pyls.core import gobble_file, scan_dir_children, collect_entries
+from pyls.core import collect_entries, gobble_file, scan_dir_children
 from pyls.filter import filter_ignored, iter_display_entries
-from pyls.format import calculate_total_blocks, format_long_line, max_width, format_line_with_widths, format_prefix, \
-    format_entry_name, human_readable_size
-from pyls.types import (
-    FileEntry
+from pyls.format import (
+    calculate_total_blocks,
+    format_entry_name,
+    format_line_with_widths,
+    format_long_line,
+    format_prefix,
+    human_readable_size,
+    max_width,
 )
+from pyls.types import FileEntry
+
 
 def print_entries(entries: list[FileEntry], opts) -> None:
     filtered_entries = filter_ignored(entries, opts)

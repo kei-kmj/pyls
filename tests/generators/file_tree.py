@@ -84,8 +84,7 @@ def create_special_files_sample(base: Path) -> None:
 
     # Mixed special chars (2 files)
     touch(base / "mixed_01\t\nfile.txt")
-    touch(base / "mixed_02 \"test\".py")
-
+    touch(base / 'mixed_02 "test".py')
 
 
 def main() -> int:
@@ -111,6 +110,7 @@ def main() -> int:
 
     print(f"created: {root} (samples={samples})")
     return 0
+
 
 if __name__ == "__main__":
     raise SystemExit(main())

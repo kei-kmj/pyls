@@ -1,12 +1,11 @@
 from __future__ import annotations
 
-import argparse
 import sys
 from pathlib import Path
 
 from pyls.cli import build_parser
-from pyls.core import FileEntry, collect_entries, gobble_file, scan_dir_children, classify_paths
-from pyls.output import print_newline_except_last, print_files, print_directory, print_subdirs_recursively
+from pyls.core import classify_paths
+from pyls.output import print_directory, print_files, print_subdirs_recursively
 
 
 def main(argv: list[str] | None = None) -> None:

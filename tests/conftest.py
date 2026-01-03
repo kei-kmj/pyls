@@ -32,7 +32,7 @@ class MockOpts:
 
     # フィルタ
     ignore: list[str] = field(default_factory=list)
-    hide : list[str] = field(default_factory=list)
+    hide: list[str] = field(default_factory=list)
     all: bool = False
     almost_all: bool = False
 
