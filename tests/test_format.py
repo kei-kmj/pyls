@@ -108,7 +108,7 @@ def test_format_long_line():
     )
     line = format_long_line(entry, opts)
 
-    assert line.mode == "-rw-r--r-- "
+    assert line.mode == "-rw-r--r--"
     assert line.nlink == 1
     assert line.owner == "1000"
     assert line.group == "1000"
@@ -417,7 +417,7 @@ def test_format_long_line_with_default_time():
         ),
     )
     line = format_long_line(entry, opts)
-    assert line.time == "Dec 01 10:00"
+    assert line.time == "Dec  1 10:00"
 
 
 @freeze_time("2025-01-01 12:00:00")
@@ -464,10 +464,10 @@ def test_group_name_unknown_gid():
     assert result == "999999"
 
 
-def test_format_prefix_no_options(sample_000000_dir):
+def test_format_prefix_no_options(sample_00_dir):
     args = build_parser().parse_args([])
     entries = []
-    gobble_file(sample_000000_dir / "file_0000.txt", entries)
+    gobble_file(sample_00_dir / "file_0000.txt", entries)
     entry = entries[0]
 
     result = format_prefix(entry, args)
@@ -475,10 +475,10 @@ def test_format_prefix_no_options(sample_000000_dir):
     assert result == ""
 
 
-def test_format_prefix_inode(sample_000000_dir):
+def test_format_prefix_inode(sample_00_dir):
     args = build_parser().parse_args(["-i"])
     entries = []
-    gobble_file(sample_000000_dir / "file_0000.txt", entries)
+    gobble_file(sample_00_dir / "file_0000.txt", entries)
     entry = entries[0]
 
     result = format_prefix(entry, args)
@@ -487,10 +487,10 @@ def test_format_prefix_inode(sample_000000_dir):
     assert result.endswith(" ")
 
 
-def test_format_prefix_size(sample_000000_dir):
+def test_format_prefix_size(sample_00_dir):
     args = build_parser().parse_args(["-s"])
     entries = []
-    gobble_file(sample_000000_dir / "file_0000.txt", entries)
+    gobble_file(sample_00_dir / "file_0000.txt", entries)
     entry = entries[0]
 
     result = format_prefix(entry, args)
@@ -498,10 +498,10 @@ def test_format_prefix_size(sample_000000_dir):
     assert result.endswith(" ")
 
 
-def test_format_prefix_inode_and_size(sample_000000_dir):
+def test_format_prefix_inode_and_size(sample_00_dir):
     args = build_parser().parse_args(["-i", "-s"])
     entries = []
-    gobble_file(sample_000000_dir / "file_0000.txt", entries)
+    gobble_file(sample_00_dir / "file_0000.txt", entries)
     entry = entries[0]
 
     result = format_prefix(entry, args)

@@ -57,6 +57,37 @@ def create_one_sample(base: Path) -> None:
         touch(base / f"file_{i:04d}.txt")
 
 
+def create_special_files_sample(base: Path) -> None:
+    """Create sample with special characters in filenames."""
+    base.mkdir(parents=True, exist_ok=True)
+
+    # Newlines (2 files)
+    touch(base / "newline_01\nfile.txt")
+    touch(base / "newline_02\ntest.md")
+
+    # Tabs (2 files)
+    touch(base / "tab_01\tfile.txt")
+    touch(base / "tab_02\ttest.py")
+
+    # Spaces (3 files)
+    touch(base / "space 01 file.txt")
+    touch(base / "space 02 test.md")
+    touch(base / "space 03 data.json")
+
+    # Backslashes (2 files)
+    touch(base / "backslash_01\\file.txt")
+    touch(base / "backslash_02\\test.csv")
+
+    # Quotes (2 files)
+    touch(base / 'quote_01"file.txt')
+    touch(base / "quote_02'test.sh")
+
+    # Mixed special chars (2 files)
+    touch(base / "mixed_01\t\nfile.txt")
+    touch(base / "mixed_02 \"test\".py")
+
+
+
 def main() -> int:
     root = Path(os.getenv("ROOT", "./test_fixture"))
     samples = env_int("SAMPLES", 1)
@@ -68,13 +99,18 @@ def main() -> int:
     root.mkdir(parents=True, exist_ok=True)
 
     for s in range(samples):
-        base = root / f"sample_{s:06d}"
+        base = root / f"sample_{s:02d}"
         base.mkdir(parents=True, exist_ok=True)
         create_one_sample(base)
 
     print(f"created: {root} (samples={samples})")
-    return 0
 
+    # sample_01 に特殊ファイル
+    special = root / "sample_01"
+    create_special_files_sample(special)
+
+    print(f"created: {root} (samples={samples})")
+    return 0
 
 if __name__ == "__main__":
     raise SystemExit(main())

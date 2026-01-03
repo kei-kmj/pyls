@@ -54,10 +54,10 @@ def test_should_include(all_flag, almost_all_flag, name, expected):
     assert should_include(name, opts) is expected
 
 
-def test_scan_dir_children_succeeds_for_existing_dir(sample_000000_dir):
+def test_scan_dir_children_succeeds_for_existing_dir(sample_00_dir):
     entries = []
     opts = MockOpts()
-    dir_entries, status = scan_dir_children(sample_000000_dir, opts, entries=entries)
+    dir_entries, status = scan_dir_children(sample_00_dir, opts, entries=entries)
 
     assert status == 0
     assert len(dir_entries.entries) == 12
@@ -72,42 +72,42 @@ def test_scan_dir_children_fails_for_nonexistent_dir():
     assert status == 1
 
 
-def test_scan_dir_children_fails_for_permission_error(sample_000000_dir, monkeypatch, capsys, mock_permission_error):
+def test_scan_dir_children_fails_for_permission_error(sample_00_dir, monkeypatch, capsys, mock_permission_error):
     opts = MockOpts()
 
     monkeypatch.setattr(Path, "iterdir", mock_permission_error)
 
     entries = []
-    dir_entries, status = scan_dir_children(sample_000000_dir, opts, entries)
+    dir_entries, status = scan_dir_children(sample_00_dir, opts, entries)
 
     assert status == 1
     out = capsys.readouterr().out
     assert "pyls: cannot access" in out
 
 
-def test_collect_entries_bfs_returns_scan_paths_result_for_existing_dir(sample_000000_dir):
+def test_collect_entries_bfs_returns_scan_paths_result_for_existing_dir(sample_00_dir):
     opts = MockOpts()
-    result = collect_entries([sample_000000_dir], opts)
+    result = collect_entries([sample_00_dir], opts)
 
     assert len(result) == 1
 
 
-def test_collect_entries_bfs_returns_dir_entries_for_existing_file(sample_000000_dir):
-    p = sample_000000_dir
+def test_collect_entries_bfs_returns_dir_entries_for_existing_file(sample_00_dir):
+    p = sample_00_dir
     opts = MockOpts()
 
     result = collect_entries([p], opts)
 
     assert len(result) == 1
-    assert result[0].path == sample_000000_dir
+    assert result[0].path == sample_00_dir
     assert len(result[0].entries) == 12
 
 
-def test_classify_paths_only_files(sample_000000_dir):
+def test_classify_paths_only_files(sample_00_dir):
     opts = MockOpts()
     paths = [
-        str(sample_000000_dir / "file_0000.txt"),
-        str(sample_000000_dir / "file_0001.txt"),
+        str(sample_00_dir / "file_0000.txt"),
+        str(sample_00_dir / "file_0001.txt"),
     ]
 
     files, dirs = classify_paths(paths, opts)
@@ -116,11 +116,11 @@ def test_classify_paths_only_files(sample_000000_dir):
     assert len(dirs) == 0
 
 
-def test_classify_paths_only_dirs(sample_000000_dir):
+def test_classify_paths_only_dirs(sample_00_dir):
     opts = MockOpts()
     paths = [
-        str(sample_000000_dir / "dir_a"),
-        str(sample_000000_dir / "dir_b"),
+        str(sample_00_dir / "dir_a"),
+        str(sample_00_dir / "dir_b"),
     ]
 
     files, dirs = classify_paths(paths, opts)
@@ -129,11 +129,11 @@ def test_classify_paths_only_dirs(sample_000000_dir):
     assert len(dirs) == 2
 
 
-def test_classify_paths_mixed(sample_000000_dir):
+def test_classify_paths_mixed(sample_00_dir):
     opts = MockOpts()
     paths = [
-        str(sample_000000_dir / "file_0000.txt"),
-        str(sample_000000_dir / "dir_a"),
+        str(sample_00_dir / "file_0000.txt"),
+        str(sample_00_dir / "dir_a"),
     ]
 
     files, dirs = classify_paths(paths, opts)

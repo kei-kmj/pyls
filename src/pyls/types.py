@@ -52,8 +52,8 @@ class EscapeSeq:
 
 
 class Format:
-    DAY_WITH_TIME = "%b %d %H:%M"
-    DAY_WITH_YEAR = "%b %d  %Y"
+    DAY_WITH_TIME = "%b %e %H:%M"
+    DAY_WITH_YEAR = "%b %e  %Y"
     QUOTE = '"'
     DIR_INDICATOR = "/"
     NONPRINTABLE = "?"

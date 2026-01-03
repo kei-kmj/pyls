@@ -73,13 +73,12 @@ def format_line_with_widths(line: LongFormatLine, widths: dict[str, int], opts, 
     parts = [line.mode, pad_value(line.nlink, widths["nlink"])]
 
     if not opts.no_owner:
-        parts.append(pad_value(line.owner, widths["owner"], right=False) + " ")
+        parts.append(pad_value(line.owner, widths["owner"], right=False))
 
     if not opts.no_group:
         parts.append(pad_value(line.group, widths["group"], right=False))
 
-    extra_space = "  " if (opts.no_owner and opts.no_group) else " "
-    parts.append(extra_space + pad_value(line.size, widths["size"]))
+    parts.append(pad_value(line.size, widths["size"]))
     parts.append(line.time)
     parts.append(line.name)
 
@@ -89,9 +88,9 @@ def format_line_with_widths(line: LongFormatLine, widths: dict[str, int], opts, 
 def extended_attribute_char(path: Path) -> str:
     try:
         attrs = xattr.listxattr(str(path))
-        return XattrChar.PRESENT if attrs else XattrChar.ABSENT
+        return XattrChar.PRESENT if attrs else ""
     except OSError:
-        return XattrChar.ABSENT
+        return ""
 
 
 def user_name(uid: int, numeric: bool) -> str:

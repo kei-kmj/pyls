@@ -18,7 +18,10 @@ def main(argv: list[str] | None = None) -> None:
     paths = args.paths if args.paths else ["."]
     files, dirs = classify_paths(paths, args)
 
-    show_header = len(dirs) >= 1 and len(paths) > 1
+    if args.recursive:
+        show_header = True
+    else:
+        show_header = len(dirs) >= 1 and len(paths) > 1
 
     if files:
         print_files(files, args)

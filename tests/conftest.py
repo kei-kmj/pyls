@@ -32,7 +32,7 @@ class MockOpts:
 
     # フィルタ
     ignore: list[str] = field(default_factory=list)
-    hide: str | bool = False
+    hide : list[str] = field(default_factory=list)
     all: bool = False
     almost_all: bool = False
 
@@ -59,8 +59,8 @@ def repo_root() -> Path:
 
 
 @pytest.fixture(scope="session")
-def sample_000000_dir(repo_root: Path) -> Path:
-    return repo_root / "test_fixture" / "sample_000000"
+def sample_00_dir(repo_root: Path) -> Path:
+    return repo_root / "test_fixture" / "sample_00"
 
 
 def make_file_status(

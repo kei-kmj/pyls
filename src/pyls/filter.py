@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import fnmatch
 import re
+import sys
 from collections.abc import Iterable
 
 from pyls.types import FileEntry
@@ -21,8 +22,9 @@ def filter_ignored(entries: Iterable[FileEntry], opts) -> list[FileEntry]:
 
     if not (opts.all or opts.almost_all):
         if opts.hide:
-            patterns.append(opts.hide)
+            patterns.extend(opts.hide)
 
+    print(f"DEBUG: patterns={patterns}", file=sys.stderr)
     if not patterns:
         return list(entries)
     return [e for e in entries if not should_ignore(e.name, patterns)]

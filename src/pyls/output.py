@@ -6,7 +6,7 @@ from pathlib import Path
 from pyls.core import gobble_file, scan_dir_children, collect_entries
 from pyls.filter import filter_ignored, iter_display_entries
 from pyls.format import calculate_total_blocks, format_long_line, max_width, format_line_with_widths, format_prefix, \
-    format_entry_name
+    format_entry_name, human_readable_size
 from pyls.types import (
     FileEntry
 )
@@ -15,8 +15,16 @@ def print_entries(entries: list[FileEntry], opts) -> None:
     filtered_entries = filter_ignored(entries, opts)
     display_entries = list(iter_display_entries(filtered_entries, opts))
 
+    if opts.numeric_uid_gid or opts.no_owner:
+        opts.long = True
+
     if opts.long or opts.size:
-        print(f"total {calculate_total_blocks(display_entries)}")
+        total_blocks = calculate_total_blocks(display_entries)
+        if opts.human_readable:
+            total_str = human_readable_size(total_blocks * 512)
+        else:
+            total_str = str(total_blocks)
+        print(f"total {total_str}")
 
     if opts.long:
         # 1パス目：生データ収集
@@ -41,8 +49,7 @@ def print_entries(entries: list[FileEntry], opts) -> None:
 
         if opts.one_column:
             for i, name in enumerate(names):
-                print(name, end="")
-                print_newline_except_last(i, len(names))
+                print(name)
         else:
             terminal_width = opts.width if opts.width else current_terminal_width()
             tab_size = opts.tabsize if opts.tabsize else 8

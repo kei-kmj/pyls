@@ -4,9 +4,9 @@ from pyls.output import print_newline_except_last, print_directory, print_files,
     print_columns, print_entries
 
 
-def test_print_entries_one_column(sample_000000_dir, capsys):
+def test_print_entries_one_column(sample_00_dir, capsys):
     args = build_parser().parse_args(["-1"])
-    dir_entries, _ = scan_dir_children(sample_000000_dir, args, entries=[])
+    dir_entries, _ = scan_dir_children(sample_00_dir, args, entries=[])
 
     print_entries(dir_entries.entries, args)
 
@@ -18,9 +18,9 @@ def test_print_entries_one_column(sample_000000_dir, capsys):
     assert "dir_b" in lines
 
 
-def test_print_files_single_file(sample_000000_dir, capsys):
+def test_print_files_single_file(sample_00_dir, capsys):
     args = build_parser().parse_args([])
-    files = [sample_000000_dir / "file_0000.txt"]
+    files = [sample_00_dir / "file_0000.txt"]
 
     print_files(files, args)
 
@@ -28,11 +28,11 @@ def test_print_files_single_file(sample_000000_dir, capsys):
     assert "file_0000.txt" in out
 
 
-def test_print_files_multiple_files(sample_000000_dir, capsys):
+def test_print_files_multiple_files(sample_00_dir, capsys):
     args = build_parser().parse_args([])
     files = [
-        sample_000000_dir / "file_0000.txt",
-        sample_000000_dir / "file_0001.txt",
+        sample_00_dir / "file_0000.txt",
+        sample_00_dir / "file_0001.txt",
     ]
 
     print_files(files, args)
@@ -42,9 +42,9 @@ def test_print_files_multiple_files(sample_000000_dir, capsys):
     assert "file_0001.txt" in out
 
 
-def test_print_files_long_format(sample_000000_dir, capsys):
+def test_print_files_long_format(sample_00_dir, capsys):
     args = build_parser().parse_args(["-l"])
-    files = [sample_000000_dir / "file_0000.txt"]
+    files = [sample_00_dir / "file_0000.txt"]
 
     print_files(files, args)
 
@@ -53,41 +53,41 @@ def test_print_files_long_format(sample_000000_dir, capsys):
     assert "-rw" in out
 
 
-def test_print_directory_with_header(sample_000000_dir, capsys):
+def test_print_directory_with_header(sample_00_dir, capsys):
     args = build_parser().parse_args([])
 
-    print_directory(sample_000000_dir, args, show_header=True)
+    print_directory(sample_00_dir, args, show_header=True)
 
     out = capsys.readouterr().out
-    assert f"{sample_000000_dir}:" in out
+    assert f"{sample_00_dir}:" in out
     assert "dir_a" in out
     assert "dir_b" in out
 
 
-def test_print_directory_without_header(sample_000000_dir, capsys):
+def test_print_directory_without_header(sample_00_dir, capsys):
     args = build_parser().parse_args([])
 
-    print_directory(sample_000000_dir, args, show_header=False)
+    print_directory(sample_00_dir, args, show_header=False)
 
     out = capsys.readouterr().out
-    assert f"{sample_000000_dir}:" not in out
+    assert f"{sample_00_dir}:" not in out
     assert "dir_a" in out
 
 
-def test_print_directory_returns_subdirs(sample_000000_dir):
+def test_print_directory_returns_subdirs(sample_00_dir):
     args = build_parser().parse_args([])
 
-    subdirs = print_directory(sample_000000_dir, args, show_header=False)
+    subdirs = print_directory(sample_00_dir, args, show_header=False)
 
     subdir_names = [s.name for s in subdirs]
     assert "dir_a" in subdir_names
     assert "dir_b" in subdir_names
 
 
-def test_print_directory_excludes_dot_dirs(sample_000000_dir):
+def test_print_directory_excludes_dot_dirs(sample_00_dir):
     args = build_parser().parse_args(["-a"])  # show . and ..
 
-    subdirs = print_directory(sample_000000_dir, args, show_header=False)
+    subdirs = print_directory(sample_00_dir, args, show_header=False)
 
     subdir_names = [s.name for s in subdirs]
     assert "." not in subdir_names
@@ -112,10 +112,10 @@ def test_print_newline_except_last_single_item(capsys):
     assert out == ""
 
 
-def test_print_subdirs_recursively_with_dot_prefix(sample_000000_dir, capsys):
+def test_print_subdirs_recursively_with_dot_prefix(sample_00_dir, capsys):
     args = build_parser().parse_args(["-R"])
     args.paths = ["."]
-    subdirs = [sample_000000_dir / "dir_a"]
+    subdirs = [sample_00_dir / "dir_a"]
 
     print_subdirs_recursively(subdirs, args)
 
@@ -123,10 +123,10 @@ def test_print_subdirs_recursively_with_dot_prefix(sample_000000_dir, capsys):
     assert "./" in out
 
 
-def test_print_subdirs_recursively_without_dot_prefix(sample_000000_dir, capsys):
+def test_print_subdirs_recursively_without_dot_prefix(sample_00_dir, capsys):
     args = build_parser().parse_args(["-R"])
     args.paths = ["test_fixture"]
-    subdirs = [sample_000000_dir / "dir_a"]
+    subdirs = [sample_00_dir / "dir_a"]
 
     print_subdirs_recursively(subdirs, args)
 
@@ -134,10 +134,10 @@ def test_print_subdirs_recursively_without_dot_prefix(sample_000000_dir, capsys)
     assert out.startswith("./") is False
 
 
-def test_print_subdirs_recursively_shows_contents(sample_000000_dir, capsys):
+def test_print_subdirs_recursively_shows_contents(sample_00_dir, capsys):
     args = build_parser().parse_args(["-R"])
     args.paths = ["test_fixture"]
-    subdirs = [sample_000000_dir / "dir_a"]
+    subdirs = [sample_00_dir / "dir_a"]
 
     print_subdirs_recursively(subdirs, args)
 
@@ -145,12 +145,12 @@ def test_print_subdirs_recursively_shows_contents(sample_000000_dir, capsys):
     assert "a_0000.txt" in out
 
 
-def test_print_subdirs_recursively_multiple_dirs(sample_000000_dir, capsys):
+def test_print_subdirs_recursively_multiple_dirs(sample_00_dir, capsys):
     args = build_parser().parse_args(["-R"])
     args.paths = ["test_fixture"]
     subdirs = [
-        sample_000000_dir / "dir_a",
-        sample_000000_dir / "dir_b",
+        sample_00_dir / "dir_a",
+        sample_00_dir / "dir_b",
     ]
 
     print_subdirs_recursively(subdirs, args)

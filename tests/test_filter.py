@@ -17,7 +17,7 @@ def test_ignore_filters_matching_names():
 
 
 def test_hide_filters_matching_names():
-    opts = MockOpts(hide="*.py")
+    opts = MockOpts(hide=["*.py"])
 
     entries = [
         make_file_entry(Path("a.py")),

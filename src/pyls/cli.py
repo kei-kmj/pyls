@@ -15,8 +15,10 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("-b", "--escape", action="store_true", help="print C-style escapes for nongraphic characters")
     p.add_argument("--color", dest="colorize", action="store_true", default=False)
     p.add_argument("-d", "--directory", action="store_true", help="list directories themselves, not their contents")
-    p.add_argument("--file-type", action="store_true", help="likewise, except do not append '*'")
-    p.add_argument("-F", "--classify", action="store_true", help="append indicator (one of */=>@|) to entries")
+    p.add_argument("--file-type", action="store_true",
+               help="append indicator (one of /=>@|) to entries, but not '*' for executables")
+    p.add_argument("-F", "--classify", action="store_true",
+               help="append indicator (one of */=>@|) to entries")
     p.add_argument("-g", "--no-owner", action="store_true", help="like -l, but do not list owner information")
     p.add_argument(
         "-h",
@@ -24,7 +26,11 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="with -l, print sizes in human readable format (e.g., 1K 234M 2G)",
     )
-    p.add_argument("--hide", metavar="PATTERN", action="store", help="do not list implied entries matching PATTERN")
+    p.add_argument("--hide",
+                   metavar="PATTERN",
+                   action="append",
+                   default=[],
+                   help="do not list implied entries matching PATTERN")
     p.add_argument("-i", "--inode", action="store_true", help="print the index number of each file")
     p.add_argument(
         "-I",
