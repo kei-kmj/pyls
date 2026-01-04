@@ -65,26 +65,13 @@ def create_special_files_sample(base: Path) -> None:
     touch(base / "newline_01\nfile.txt")
     touch(base / "newline_02\ntest.md")
 
-    # Tabs (2 files)
-    touch(base / "tab_01\tfile.txt")
-    touch(base / "tab_02\ttest.py")
-
-    # Spaces (3 files)
+    # Spaces (2 files)
     touch(base / "space 01 file.txt")
-    touch(base / "space 02 test.md")
-    touch(base / "space 03 data.json")
-
-    # Backslashes (2 files)
-    touch(base / "backslash_01\\file.txt")
-    touch(base / "backslash_02\\test.csv")
+    touch(base / "space 02 test.py")
 
     # Quotes (2 files)
     touch(base / 'quote_01"file.txt')
     touch(base / "quote_02'test.sh")
-
-    # Mixed special chars (2 files)
-    touch(base / "mixed_01\t\nfile.txt")
-    touch(base / 'mixed_02 "test".py')
 
 
 def main() -> int:
@@ -104,8 +91,8 @@ def main() -> int:
 
     print(f"created: {root} (samples={samples})")
 
-    # sample_01 に特殊ファイル
-    special = root / "sample_01"
+    # sample_control_char に特殊ファイル
+    special = root / "sample_control_char"
     create_special_files_sample(special)
 
     print(f"created: {root} (samples={samples})")

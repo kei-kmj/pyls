@@ -24,21 +24,19 @@ def filter_ignored(entries: Iterable[FileEntry], opts) -> list[FileEntry]:
         if opts.hide:
             patterns.extend(opts.hide)
 
-    print(f"DEBUG: patterns={patterns}", file=sys.stderr)
     if not patterns:
         return list(entries)
     return [e for e in entries if not should_ignore(e.name, patterns)]
 
 
 def iter_display_entries(entries: list[FileEntry], opts) -> list[FileEntry]:
-    if opts.unsorted or opts.sort == "none":
-        return list(entries)
+    entries = sorted(entries, key=lambda e: e.name)
 
     if opts.sort_time or opts.sort == "time":
         return sorted(entries, key=lambda e: e.file_status.mtime, reverse=not opts.reverse)
 
     if opts.sort_size or opts.sort == "size":
-        return sorted(entries, key=lambda e: e.file_status.size, reverse=not opts.reverse)
+        return sorted(entries, key=lambda e: e.file_status.size, reverse=(not opts.reverse))
 
     if opts.sort_extension or opts.sort == "extension":
 

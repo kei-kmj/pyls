@@ -1,5 +1,6 @@
 import grp
 import pwd
+import shlex
 import stat
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -234,11 +235,53 @@ BLUE = "\033[1;34m"
 RESET = "\033[0m"
 
 
-def format_entry_name(entry: FileEntry, opts) -> str:
-    if opts.literal:
-        return entry.name
+def shell_quote_ansi_c(s: str) -> str:
+    """Shell-safe quoting with ANSI-C style for special chars"""
+    # 特殊文字があるかチェック
+    needs_quoting = any(c in ' \t\n\r\'"\\' or not c.isprintable() for c in s)
+    if not needs_quoting:
+        return s
 
+    has_single = "'" in s
+    has_double = '"' in s
+    has_nonprintable = any(not c.isprintable() for c in s)
+
+    # シングルクォートがあり、ダブルクォートがなく、非表示文字もない
+    if has_single and not has_double and not has_nonprintable:
+        return f'"{s}"'
+
+
+        # ANSI-C quoting
+    result = '"' if has_single else "'"
+    for c in s:
+        if c == '\\':
+            result += '\\\\'
+        elif c == '\t':
+            result += "'$'"'\\t'"\'""\'"
+        elif c == '\n':
+            result += "'$'"'\\n'"\'""\'"
+        elif c == '\r':
+            result += '\\r'
+        elif c == "'":
+            result += "\\'"
+        else:
+            result += c
+    result += '"' if has_single else "'"
+    return result
+
+
+def format_entry_name(entry: FileEntry, opts) -> str:
     name = entry.name
+
+    if not (opts.literal or opts.escape or opts.quote_name or opts.p):
+        name = shell_quote_ansi_c(name)
+        name += file_type_indicator(entry, opts)
+        return name
+
+    if opts.literal:
+        name = replace_nonprintable(name)
+        name += file_type_indicator(entry, opts)
+        return name
 
     if opts.escape:
         name = c_escape(name)

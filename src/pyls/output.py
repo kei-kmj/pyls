@@ -20,7 +20,7 @@ def print_entries(entries: list[FileEntry], opts) -> None:
     filtered_entries = filter_ignored(entries, opts)
     display_entries = list(iter_display_entries(filtered_entries, opts))
 
-    if opts.numeric_uid_gid or opts.no_owner:
+    if opts.numeric_uid_gid or opts.no_owner or opts.no_group:
         opts.long = True
 
     if opts.long or opts.size:

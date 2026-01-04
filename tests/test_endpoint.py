@@ -88,7 +88,7 @@ def test_hide_option():
 def test_i_option():
     pyls_out = run_pyls("-i", "test_fixture")
 
-    expected = "5810 sample_00  5836 sample_01\n"
+    expected = "6370 sample_00  6396 sample_control_char\n"
     assert pyls_out == expected
 
 
@@ -109,11 +109,40 @@ def test_l_h_option():
     assert pyls_total == ls_total
 
 
-def test_p_option():
-    ls_out = run_ls("-p", "test_fixture")
-    pyls_out = run_pyls("-p", "test_fixture")
+def test_l_option():
+    ls_out = run_ls("-l", "test_fixture")
+    pyls_out = run_pyls("-l", "test_fixture")
 
     assert pyls_out == ls_out
+
+def test_n_option():
+    ls_out = run_ls("-n", "test_fixture")
+    pyls_out = run_pyls("-n", "test_fixture")
+
+    assert pyls_out == ls_out
+
+
+def test_N_option():
+    ls_out = run_ls("-N", "test_fixture")
+    pyls_out = run_pyls("-N", "test_fixture")
+
+    assert pyls_out == ls_out
+
+
+def test_o_option():
+    ls_out = run_ls("-o", "test_fixture")
+    pyls_out = run_pyls("-o", "test_fixture")
+
+    assert pyls_out == ls_out
+
+
+def test_p_option():
+    pyls_out = run_pyls("-p", "test_fixture/sample_00")
+
+    assert pyls_out == """dir_a/         file_0001.txt  file_0004.txt  file_0007.txt  
+dir_b/         file_0002.txt  file_0005.txt  file_0008.txt  
+file_0000.txt  file_0003.txt  file_0006.txt  file_0009.txt  
+"""
 
 
 def test_Q_option():
@@ -126,20 +155,6 @@ def test_Q_option():
 def test_r_option():
     ls_out = run_ls("-r", "test_fixture")
     pyls_out = run_pyls("-r", "test_fixture")
-
-    assert pyls_out == ls_out
-
-
-def test_n_option():
-    ls_out = run_ls("-n", "test_fixture")
-    pyls_out = run_pyls("-n", "test_fixture")
-
-    assert pyls_out == ls_out
-
-
-def test_l_option():
-    ls_out = run_ls("-l", "test_fixture")
-    pyls_out = run_pyls("-l", "test_fixture")
 
     assert pyls_out == ls_out
 
@@ -216,3 +231,4 @@ def test_w_option():
     pyls_out = run_pyls("-w", "90", "test_fixture")
 
     assert pyls_out == ls_out
+

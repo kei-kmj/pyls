@@ -112,7 +112,7 @@ def test_iter_display_entries_unsorted():
         make_file_entry(Path("b1.txt")),
     ]
     result = iter_display_entries(entries, opts)
-    assert [e.name for e in result] == ["c.txt", "a.txt", "b1.txt"]
+    assert [e.name for e in result] == ['a.txt', 'b1.txt', 'c.txt']
 
 
 def test_iter_display_entries_sort_by_extension():

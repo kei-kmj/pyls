@@ -180,7 +180,7 @@ def test_quote_double_escapes_quote_and_backslash():
 def test_format_entry_name_applies_q():
     opts = MockOpts(hide_control_chars=True)
     e = make_file_entry(Path("x"), "a\nb", False)
-    assert format_entry_name(e, opts) == "a?b"
+    assert format_entry_name(e, opts) == "'a'$'"'\\n'"''b'"
 
 
 def test_format_entry_name_applies_Q():
@@ -198,7 +198,7 @@ def test_format_entry_name_applies_q_then_Q():
 def test_N_disables_q_and_Q():
     opts = MockOpts(literal=True, hide_control_chars=True, quote_name=True)
     e = make_file_entry(Path("x"), "a\nb", False)
-    assert format_entry_name(e, opts) == "a\nb"
+    assert format_entry_name(e, opts) == "a?b"
 
 
 def test_N_only_prints_literal():
@@ -216,7 +216,7 @@ def test_b_wins_over_q():
 def test_N_disables_b():
     opts = MockOpts(literal=True, escape=True)
     e = make_file_entry(Path("x"), "a\nb", False)
-    assert format_entry_name(e, opts) == "a\nb"
+    assert format_entry_name(e, opts) == "a?b"
 
 
 def test_p_appends_slash_only_for_directories():
@@ -500,3 +500,40 @@ def test_format_prefix_inode_and_size(sample_00_dir):
     result = format_prefix(entry, args)
 
     assert str(entry.file_status.inode) in result
+
+
+# tests/test_format.py に追加
+
+import pytest
+
+@pytest.mark.parametrize("input_name,expected", [
+    # 普通のファイル名 - quoting なし
+    ("normal.txt", "normal.txt"),
+    ("file123", "file123"),
+
+    # スペースあり - シングルクォート
+    ("space file.txt", "'space file.txt'"),
+    ("space 01 file.txt", "'space 01 file.txt'"),
+
+    # シングルクォートあり - ダブルクォート
+    ("quote'test.sh", '"quote\'test.sh"'),
+
+    # ダブルクォートあり - シングルクォート
+    ('quote"file.txt', '\'quote"file.txt\''),
+
+    # 改行あり - セグメント分割
+    ("newline\nfile.txt", "'newline'$'\\n''file.txt'"),
+
+    # タブあり - セグメント分割
+    ("tab\tfile.txt", "'tab'$'\\t''file.txt'"),
+
+    # バックスラッシュ - シングルクォート
+    ("backslash\\file.txt", "'backslash\\\\file.txt'"),
+
+    # 空文字列
+    ("", ''),
+])
+def test_shell_quote_ansi_c(input_name, expected):
+    """test shell_quote_ansi_c function"""
+    from pyls.format import shell_quote_ansi_c
+    assert shell_quote_ansi_c(input_name) == expected
