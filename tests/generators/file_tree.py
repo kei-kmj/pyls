@@ -21,7 +21,7 @@ from pathlib import Path
 from typing import Final
 
 # Fixed spec
-TOP_FILES: Final[int] = 10
+TOP_FILES: int = 10
 DIR_A_FILES: Final[int] = 5
 DIR_B_FILES: Final[int] = 8
 
@@ -53,7 +53,7 @@ def create_one_sample(base: Path) -> None:
         touch(base / "dir_a" / f"a_{i:04d}.txt")
     for i in range(DIR_B_FILES):
         touch(base / "dir_b" / f"b_{i:04d}.txt")
-    for i in range(TOP_FILES):
+    for i in range(100000):
         touch(base / f"file_{i:04d}.txt")
 
 

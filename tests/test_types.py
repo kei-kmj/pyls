@@ -1,4 +1,4 @@
-from pyls.types import LongFormatLine
+from pyls.entities import LongFormatLine
 
 
 def test_long_format_line_str():

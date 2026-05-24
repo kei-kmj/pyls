@@ -10,7 +10,7 @@ from pyls.core import (
     scan_dir_children,
     should_include,
 )
-from pyls.types import ExitStatus
+from pyls.entities import ExitStatus
 
 
 def test_gobble_file_file_not_found(capsys):

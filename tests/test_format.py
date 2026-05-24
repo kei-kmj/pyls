@@ -28,7 +28,7 @@ from pyls.format import (
     replace_nonprintable,
     user_name,
 )
-from pyls.types import LongFormatLine
+from pyls.entities import LongFormatLine
 
 
 def test_filetype_char_directory():

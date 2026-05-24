@@ -7,16 +7,18 @@ def run_ls(*args, cwd=None):
         capture_output=True,
         text=True,
         cwd=cwd,
+        check=True,
     )
     return result.stdout
 
 
 def run_pyls(*args, cwd=None):
     result = subprocess.run(
-        ["uv", "run", "pyls", *args],
+        ["python", "-m", "pyls", *args],
         capture_output=True,
         text=True,
         cwd=cwd,
+        check=True,
     )
 
     return result.stdout

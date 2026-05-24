@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pytest
 
-from pyls.types import FileEntry, FileStatus, LongFormatLine
+from pyls.entities import FileEntry, FileStatus, LongFormatLine
 
 
 @dataclass
