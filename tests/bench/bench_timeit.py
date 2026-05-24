@@ -2,8 +2,7 @@ import io
 import contextlib
 import timeit
 
-from pyls.main import main
-from test_endpoint import run_ls, run_pyls
+from tests.example_based.test_endpoint import run_ls
 
 
 def run():

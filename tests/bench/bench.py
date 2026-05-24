@@ -1,6 +1,6 @@
 import time
 
-from tests.test_endpoint import run_ls, run_pyls
+from tests.example_based.test_endpoint import run_ls, run_pyls
 
 N = 1
 
